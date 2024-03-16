@@ -15,12 +15,12 @@ def send_request(id_peer, band):
     s.connect(TCP_ADDR, TCP_PORT)
     s.sendall(id_peer, band)
     data = s.recv(1024)
+    s.close()
+    
     if "ACK" in data:
         return True
     else:
         return False
-
-    s.close()
 
 @app.route("/", methods=['GET', 'POST'])
 def hello():
