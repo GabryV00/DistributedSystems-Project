@@ -1,2 +1,2 @@
 .DS_Store
-./src/init/config_files
+./src/init/config_files/*
