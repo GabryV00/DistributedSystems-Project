@@ -6,16 +6,15 @@ import graphviz
 
 app = Flask(__name__, template_folder="templates")
 
+ADMIN_PORT = 9000
+PEER_PORT = 9001
+TCP_ADDR = "127.0.0.1"
 
 def send_request(id_peer, band):
 
     #Open the socket
-    #TODO: Define a dynamic approach for determine the Address and the Port
-    TCP_ADDR = "127.0.0.2"
-    TCP_PORT = 100
-
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(TCP_ADDR, TCP_PORT)
+    s.connect(TCP_ADDR, PEER_PORT)
     s.sendall(id_peer, band)
     data = s.recv(1024)
     s.close()
@@ -30,8 +29,8 @@ def generate_graph(PATH):
     """
     Function that generates the graph of the newtork reading the json files
     """
-    if not("graph" in os.listdir(".")):
-        os.mkdir("./graph")
+    if not("static" in os.listdir(".")):
+        os.mkdir("./static")
     
     g = graphviz.Graph("P2P Streaming Network", strict=True, format='png')
     g.attr('node', shape='circle')
@@ -48,29 +47,32 @@ def generate_graph(PATH):
             g.edge(f'{id_a}', f'{n[0]}', label=f'{n[1]}', color='blue')
 
 
-    g.render('./graph/graph.gv').replace('\\', '/')
+    g.render('./static/graph.gv').replace('\\', '/')
 
 
 @app.route("/", methods=['GET', 'POST'])
 def admin():
     if request.method == 'GET':
+        generate_graph("./../init/config_files")
         return render_template('admin.html')
-    
+    generate_graph("./../init/config_files")
     return render_template('admin.html')
 
 @app.route('/add_node', methods=['POST'])
 def add_node():
     node_id = request.form['id']
     edges = request.form['edges']
+    print(f'NodeID: {node_id}\nEdges:{edges}')
     #PASSA DATI
-    #STAMPA GRAFICO
+    generate_graph("./../init/config_files")
     return render_template('admin.html')
 
 @app.route('/remove_node', methods=['POST'])
 def remove_node():
     node_id = request.form['rid']
+    print(f'NodeID to remove: {node_id}')
     #PASSA DATI
-    #STAMPA GRAFICO
+    generate_graph("./../init/config_files")
     return render_template('admin.html')
 
 @app.route("/peer/", methods=['GET', 'POST'])
@@ -95,5 +97,4 @@ def peer():
     return render_template('peer.html')
 
 if __name__ == "__main__":
-    generate_graph("./../init/config_files")
-    #app.run(host="127.0.0.1", port=8080)
+    app.run(host="127.0.0.1", port=8080)

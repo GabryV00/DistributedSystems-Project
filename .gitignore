@@ -3,4 +3,4 @@
 /p2p_app/_build
 *.beam
 rebar.lock
-/src/webgui/graph/**
+/src/webgui/static/**
