@@ -24,6 +24,19 @@ def send_request(id_peer, band):
     else:
         return False
 
+def send_new(id_peer, edges):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(TCP_ADDR, ADMIN_PORT)
+    s.sendall(id_peer, edges)
+    data = s.recv(1024)
+    s.close()
+
+def send_kill(id_peer):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(TCP_ADDR, ADMIN_PORT)
+    s.sendall(id_peer)
+    data = s.recv(1024)
+    s.close()
 
 def generate_graph(PATH):
     """
@@ -63,16 +76,20 @@ def add_node():
     node_id = request.form['id']
     edges = request.form['edges']
     print(f'NodeID: {node_id}\nEdges:{edges}')
-    #PASSA DATI
+    
+    send_new(node_id, edges)
     generate_graph("./../init/config_files")
+    
     return render_template('admin.html')
 
 @app.route('/remove_node', methods=['POST'])
 def remove_node():
     node_id = request.form['rid']
     print(f'NodeID to remove: {node_id}')
-    #PASSA DATI
+    
+    send_kill(node_id)
     generate_graph("./../init/config_files")
+    
     return render_template('admin.html')
 
 @app.route("/peer/", methods=['GET', 'POST'])
@@ -85,16 +102,14 @@ def peer():
     band = request.form.get('band')
     
     print(f'PeerA_ID = {id_peerA}\nPeerB_ID = {id_peerB}\nRequired bandwidth = {band}')
-    #return render_template('index.html')
-
+    #return render_template('peer.html')
+    
     #send data to Erlang node via TCP
-    """
+    
     if send_request(id_peerA, id_peerB, band):
         return render_template('peer_good.html')
     else:
         return render_template('peer_error.html')
-    """
-    return render_template('peer.html')
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080)
