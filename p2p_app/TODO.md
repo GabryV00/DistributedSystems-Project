@@ -1,0 +1,11 @@
+- [x] Buildare l'applicazione in maniera consistente
+- [x] Creazione processo per MST
+  - [ ] Avvisare vicini se il pid cambia
+- [x] Join senza triggerare veramente il calcolo del MST
+- [ ] Creazione connection handler (intanto processo che non fa nulla)
+- [ ] Calcolo MST
+  - [x] Inizialmente senza sessione, ma fare in modo che il nodo sia in stato di
+    search
+  - [ ] Aggiungere gestione delle sessioni del MST
+  - [ ] Gestire nodo che fa join mentre gli altri stanno gia' calcolando MST
+  - [ ] Ricavare gli output di GHS in modo che siano utilizzabili da nodo

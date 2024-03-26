@@ -1,2 +1,5 @@
 .DS_Store
 /src/init/config_files/**
+/p2p_app/_build
+*.beam
+rebar.lock
