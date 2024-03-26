@@ -1,0 +1,23 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+    <title>ADMIN PANEL CONTROL </title> 
+</head> 
+<body> 
+    <h1>ADMIN PANEL CONTROL</h1>
+
+    <form action="/add_node" method="post">
+        Enter the ID of the new peer: <input name="id"> <br><br>
+
+        Enter the ID and the bandwidth of the neighbours of the new peer: <input name="edges"> <br><br>
+    
+        <button type="submit">Add new peer</button>
+    </form>
+
+    <form action="/remove_node" method="post">
+        Enter the ID of the peer that you want to remove: <input name="rid"> <br><br>
+    
+        <button type="submit">Remove peer</button>
+    </form>
+</body> 
+</html>
