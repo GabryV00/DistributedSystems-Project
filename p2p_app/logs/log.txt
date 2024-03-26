@@ -1,0 +1,1470 @@
+<0.9.0> N = 24
+<0.109.0> test to <0.110.0>, {component,<0.109.0>,0}
+<0.99.0> test to <0.100.0>, {component,<0.99.0>,0}
+<0.110.0> test to <0.111.0>, {component,<0.110.0>,0}
+<0.112.0> test to <0.107.0>, {component,<0.112.0>,0}
+<0.101.0> test to <0.104.0>, {component,<0.101.0>,0}
+<0.113.0> test to <0.114.0>, {component,<0.113.0>,0}
+<0.104.0> test to <0.107.0>, {component,<0.104.0>,0}
+<0.97.0> test to <0.99.0>, {component,<0.97.0>,0}
+<0.107.0> test to <0.104.0>, {component,<0.107.0>,0}
+<0.91.0> test to <0.97.0>, {component,<0.91.0>,0}
+<0.103.0> test to <0.106.0>, {component,<0.103.0>,0}
+<0.105.0> test to <0.102.0>, {component,<0.105.0>,0}
+<0.95.0> test to <0.93.0>, {component,<0.95.0>,0}
+<0.93.0> test to <0.94.0>, {component,<0.93.0>,0}
+<0.111.0> test to <0.110.0>, {component,<0.111.0>,0}
+<0.108.0> test to <0.113.0>, {component,<0.108.0>,0}
+<0.106.0> test to <0.103.0>, {component,<0.106.0>,0}
+<0.102.0> test to <0.103.0>, {component,<0.102.0>,0}
+<0.100.0> test to <0.99.0>, {component,<0.100.0>,0}
+<0.98.0> test to <0.95.0>, {component,<0.98.0>,0}
+<0.96.0> test to <0.92.0>, {component,<0.96.0>,0}
+<0.94.0> test to <0.93.0>, {component,<0.94.0>,0}
+<0.114.0> test to <0.113.0>, {component,<0.114.0>,0}
+<0.92.0> test to <0.96.0>, {component,<0.92.0>,0}
+<0.111.0> test from <0.110.0>, {component,<0.110.0>,0}
+<0.104.0> test from <0.101.0>, {component,<0.101.0>,0}
+<0.100.0> test from <0.99.0>, {component,<0.99.0>,0}
+<0.107.0> test from <0.104.0>, {component,<0.104.0>,0}
+<0.113.0> test from <0.114.0>, {component,<0.114.0>,0}
+<0.110.0> test from <0.109.0>, {component,<0.109.0>,0}
+<0.103.0> test from <0.102.0>, {component,<0.102.0>,0}
+<0.94.0> test from <0.93.0>, {component,<0.93.0>,0}
+<0.92.0> test from <0.96.0>, {component,<0.96.0>,0}
+<0.92.0> accept to <0.96.0>
+<0.114.0> test from <0.113.0>, {component,<0.113.0>,0}
+<0.95.0> test from <0.98.0>, {component,<0.98.0>,0}
+<0.111.0> accept to <0.110.0>
+<0.96.0> test from <0.92.0>, {component,<0.92.0>,0}
+<0.102.0> test from <0.105.0>, {component,<0.105.0>,0}
+<0.104.0> accept to <0.101.0>
+<0.107.0> accept to <0.104.0>
+<0.106.0> test from <0.103.0>, {component,<0.103.0>,0}
+<0.97.0> test from <0.91.0>, {component,<0.91.0>,0}
+<0.113.0> accept to <0.114.0>
+<0.94.0> accept to <0.93.0>
+<0.100.0> accept to <0.99.0>
+<0.110.0> accept to <0.109.0>
+<0.93.0> test from <0.95.0>, {component,<0.95.0>,0}
+<0.99.0> test from <0.97.0>, {component,<0.97.0>,0}
+<0.103.0> accept to <0.102.0>
+<0.93.0> accept to <0.95.0>
+<0.106.0> accept to <0.103.0>
+<0.97.0> accept to <0.91.0>
+<0.99.0> accept to <0.97.0>
+<0.114.0> accept to <0.113.0>
+<0.95.0> accept to <0.98.0>
+<0.96.0> accept to <0.92.0>
+<0.93.0> test from <0.94.0>, {component,<0.94.0>,0}
+<0.102.0> accept to <0.105.0>
+<0.107.0> test from <0.112.0>, {component,<0.112.0>,0}
+<0.110.0> test from <0.111.0>, {component,<0.111.0>,0}
+<0.113.0> test from <0.108.0>, {component,<0.108.0>,0}
+<0.103.0> test from <0.106.0>, {component,<0.106.0>,0}
+<0.104.0> test from <0.107.0>, {component,<0.107.0>,0}
+<0.93.0> accept to <0.94.0>
+<0.99.0> test from <0.100.0>, {component,<0.100.0>,0}
+<0.107.0> accept to <0.112.0>
+<0.110.0> accept to <0.111.0>
+<0.113.0> accept to <0.108.0>
+<0.99.0> accept to <0.100.0>
+<0.103.0> accept to <0.106.0>
+<0.104.0> accept to <0.107.0>
+<0.92.0> got accept
+<0.108.0> got accept
+<0.96.0> got accept
+<0.92.0> merge to <0.96.0>, 0
+<0.104.0> got accept
+<0.114.0> got accept
+<0.98.0> got accept
+<0.113.0> got accept
+<0.95.0> got accept
+<0.105.0> got accept
+<0.100.0> got accept
+<0.103.0> got accept
+<0.110.0> got accept
+<0.97.0> got accept
+<0.93.0> got accept
+<0.102.0> got accept
+<0.107.0> got accept
+<0.96.0> merge to <0.92.0>, 0
+<0.100.0> merge to <0.99.0>, 0
+<0.104.0> merge to <0.107.0>, 0
+<0.103.0> merge to <0.106.0>, 0
+<0.114.0> merge to <0.113.0>, 0
+<0.113.0> merge to <0.114.0>, 0
+<0.106.0> got accept
+<0.108.0> merge to <0.113.0>, 0
+<0.99.0> got accept
+<0.94.0> got accept
+<0.95.0> merge to <0.93.0>, 0
+<0.111.0> got accept
+<0.105.0> merge to <0.102.0>, 0
+<0.97.0> merge to <0.99.0>, 0
+<0.101.0> got accept
+<0.109.0> got accept
+<0.93.0> merge to <0.94.0>, 0
+<0.98.0> merge to <0.95.0>, 0
+<0.112.0> got accept
+<0.91.0> got accept
+<0.107.0> merge to <0.104.0>, 0
+<0.99.0> merge to <0.100.0>, 0
+<0.102.0> merge to <0.103.0>, 0
+<0.111.0> merge to <0.110.0>, 0
+<0.110.0> merge to <0.111.0>, 0
+<0.106.0> merge to <0.103.0>, 0
+<0.94.0> merge to <0.93.0>, 0
+<0.101.0> merge to <0.104.0>, 0
+<0.109.0> merge to <0.110.0>, 0
+<0.91.0> merge to <0.97.0>, 0
+<0.112.0> merge to <0.107.0>, 0
+<0.106.0> merge from <0.103.0>, 0
+<0.92.0> merge from <0.96.0>, 0
+<0.92.0> update to <0.96.0>, searching {component,<0.96.0>,1}
+<0.99.0> merge from <0.100.0>, 0
+<0.99.0> update to <0.100.0>, searching {component,<0.100.0>,1}
+<0.96.0> merge from <0.92.0>, 0
+<0.106.0> update to <0.103.0>, searching {component,<0.106.0>,1}
+<0.113.0> merge from <0.114.0>, 0
+<0.114.0> merge from <0.113.0>, 0
+<0.96.0> update to <0.92.0>, searching {component,<0.96.0>,1}
+<0.107.0> merge from <0.104.0>, 0
+<0.94.0> merge from <0.93.0>, 0
+<0.114.0> update to <0.113.0>, searching {component,<0.114.0>,1}
+<0.113.0> update to <0.114.0>, searching {component,<0.114.0>,1}
+<0.94.0> update to <0.93.0>, searching {component,<0.94.0>,1}
+<0.107.0> update to <0.104.0>, searching {component,<0.107.0>,1}
+<0.100.0> merge from <0.99.0>, 0
+<0.100.0> update to <0.99.0>, searching {component,<0.100.0>,1}
+<0.111.0> merge from <0.110.0>, 0
+<0.111.0> update to <0.110.0>, searching {component,<0.111.0>,1}
+<0.93.0> merge from <0.94.0>, 0
+<0.110.0> merge from <0.111.0>, 0
+<0.104.0> merge from <0.107.0>, 0
+<0.103.0> merge from <0.106.0>, 0
+<0.93.0> update to <0.94.0>, searching {component,<0.94.0>,1}
+<0.110.0> update to <0.111.0>, searching {component,<0.111.0>,1}
+<0.104.0> update to <0.107.0>, searching {component,<0.107.0>,1}
+<0.103.0> update to <0.106.0>, searching {component,<0.106.0>,1}
+<0.96.0> got update, {component,<0.96.0>,1} searching
+<0.113.0> got update, {component,<0.114.0>,1} searching
+<0.92.0> got update, {component,<0.96.0>,1} searching
+<0.92.0> report to <0.96.0>, none
+<0.96.0> test to <0.97.0>, {component,<0.96.0>,1}
+<0.114.0> got update, {component,<0.114.0>,1} searching
+<0.114.0> test to <0.109.0>, {component,<0.114.0>,1}
+<0.113.0> test to <0.108.0>, {component,<0.114.0>,1}
+<0.113.0> merge (quick) from <0.108.0>, 0
+<0.113.0> update to <0.108.0>, searching {component,<0.114.0>,1}
+<0.100.0> got update, {component,<0.100.0>,1} searching
+<0.100.0> test to <0.103.0>, {component,<0.100.0>,1}
+<0.106.0> got update, {component,<0.106.0>,1} searching
+<0.99.0> got update, {component,<0.100.0>,1} searching
+<0.106.0> test to <0.108.0>, {component,<0.106.0>,1}
+<0.99.0> test to <0.97.0>, {component,<0.100.0>,1}
+<0.107.0> got update, {component,<0.107.0>,1} searching
+<0.104.0> got update, {component,<0.107.0>,1} searching
+<0.111.0> got update, {component,<0.111.0>,1} searching
+<0.103.0> got update, {component,<0.106.0>,1} searching
+<0.99.0> merge (quick) from <0.97.0>, 0
+<0.104.0> test to <0.101.0>, {component,<0.107.0>,1}
+<0.93.0> got update, {component,<0.94.0>,1} searching
+<0.107.0> test to <0.108.0>, {component,<0.107.0>,1}
+<0.103.0> test to <0.102.0>, {component,<0.106.0>,1}
+<0.94.0> got update, {component,<0.94.0>,1} searching
+<0.99.0> update to <0.97.0>, searching {component,<0.100.0>,1}
+<0.94.0> test to <0.91.0>, {component,<0.94.0>,1}
+<0.107.0> merge (quick) from <0.112.0>, 0
+<0.93.0> test to <0.95.0>, {component,<0.94.0>,1}
+<0.103.0> merge (quick) from <0.102.0>, 0
+<0.110.0> got update, {component,<0.111.0>,1} searching
+<0.103.0> update to <0.102.0>, searching {component,<0.106.0>,1}
+<0.104.0> merge (quick) from <0.101.0>, 0
+<0.107.0> update to <0.112.0>, searching {component,<0.107.0>,1}
+<0.93.0> merge (quick) from <0.95.0>, 0
+<0.110.0> test to <0.109.0>, {component,<0.111.0>,1}
+<0.93.0> update to <0.95.0>, searching {component,<0.94.0>,1}
+<0.110.0> merge (quick) from <0.109.0>, 0
+<0.104.0> update to <0.101.0>, searching {component,<0.107.0>,1}
+<0.110.0> update to <0.109.0>, searching {component,<0.111.0>,1}
+<0.96.0> got report, none
+<0.108.0> got update, {component,<0.114.0>,1} searching
+<0.108.0> test to <0.106.0>, {component,<0.114.0>,1}
+<0.108.0> test from <0.113.0>, {component,<0.114.0>,1}
+<0.108.0> reject to <0.113.0>
+<0.103.0> test from <0.100.0>, {component,<0.100.0>,1}
+<0.103.0> accept to <0.100.0>
+<0.109.0> got update, {component,<0.111.0>,1} searching
+<0.109.0> test to <0.114.0>, {component,<0.111.0>,1}
+<0.112.0> got update, {component,<0.107.0>,1} searching
+<0.95.0> got update, {component,<0.94.0>,1} searching
+<0.102.0> got update, {component,<0.106.0>,1} searching
+<0.108.0> test from <0.106.0>, {component,<0.106.0>,1}
+<0.95.0> test to <0.98.0>, {component,<0.94.0>,1}
+<0.108.0> accept to <0.106.0>
+<0.109.0> test from <0.114.0>, {component,<0.114.0>,1}
+<0.102.0> test to <0.105.0>, {component,<0.106.0>,1}
+<0.112.0> report to <0.107.0>, none
+<0.97.0> got update, {component,<0.100.0>,1} searching
+<0.97.0> test to <0.96.0>, {component,<0.100.0>,1}
+<0.95.0> merge (quick) from <0.98.0>, 0
+<0.109.0> accept to <0.114.0>
+<0.108.0> test from <0.107.0>, {component,<0.107.0>,1}
+<0.102.0> merge (quick) from <0.105.0>, 0
+<0.102.0> update to <0.105.0>, searching {component,<0.106.0>,1}
+<0.95.0> update to <0.98.0>, searching {component,<0.94.0>,1}
+<0.108.0> accept to <0.107.0>
+<0.97.0> merge (quick) from <0.91.0>, 0
+<0.101.0> got update, {component,<0.107.0>,1} searching
+<0.109.0> test from <0.110.0>, {component,<0.111.0>,1}
+<0.102.0> test from <0.103.0>, {component,<0.106.0>,1}
+<0.95.0> test from <0.93.0>, {component,<0.94.0>,1}
+<0.109.0> reject to <0.110.0>
+<0.97.0> update to <0.91.0>, searching {component,<0.100.0>,1}
+<0.101.0> test to <0.96.0>, {component,<0.107.0>,1}
+<0.102.0> reject to <0.103.0>
+<0.95.0> reject to <0.93.0>
+<0.97.0> test from <0.96.0>, {component,<0.96.0>,1}
+<0.101.0> test from <0.104.0>, {component,<0.107.0>,1}
+<0.97.0> accept to <0.96.0>
+<0.101.0> reject to <0.104.0>
+<0.97.0> test from <0.99.0>, {component,<0.100.0>,1}
+<0.97.0> reject to <0.99.0>
+<0.113.0> got reject
+<0.106.0> test from <0.108.0>, {component,<0.114.0>,1}
+<0.106.0> accept to <0.108.0>
+<0.114.0> test from <0.109.0>, {component,<0.111.0>,1}
+<0.107.0> got report, none
+<0.103.0> got reject
+<0.93.0> got reject
+<0.100.0> got accept
+<0.107.0> got accept
+<0.96.0> test from <0.97.0>, {component,<0.100.0>,1}
+<0.103.0> test to <0.100.0>, {component,<0.106.0>,1}
+<0.105.0> got update, {component,<0.106.0>,1} searching
+<0.114.0> accept to <0.109.0>
+<0.104.0> got reject
+<0.96.0> accept to <0.97.0>
+<0.105.0> test to <0.110.0>, {component,<0.106.0>,1}
+<0.110.0> got reject
+<0.98.0> got update, {component,<0.94.0>,1} searching
+<0.91.0> got update, {component,<0.100.0>,1} searching
+<0.114.0> got accept
+<0.104.0> test to <0.99.0>, {component,<0.107.0>,1}
+<0.96.0> got accept
+<0.110.0> test to <0.105.0>, {component,<0.111.0>,1}
+<0.96.0> merge to <0.97.0>, 1
+<0.105.0> test from <0.102.0>, {component,<0.106.0>,1}
+<0.91.0> test to <0.94.0>, {component,<0.100.0>,1}
+<0.98.0> test to <0.102.0>, {component,<0.94.0>,1}
+<0.105.0> reject to <0.102.0>
+<0.96.0> test from <0.101.0>, {component,<0.107.0>,1}
+<0.98.0> test from <0.95.0>, {component,<0.94.0>,1}
+<0.91.0> test from <0.94.0>, {component,<0.94.0>,1}
+<0.96.0> accept to <0.101.0>
+<0.98.0> reject to <0.95.0>
+<0.91.0> accept to <0.94.0>
+<0.99.0> got reject
+<0.106.0> got accept
+<0.99.0> test to <0.104.0>, {component,<0.100.0>,1}
+<0.108.0> got accept
+<0.108.0> report to <0.113.0>, {candidate,<0.108.0>,{edge,<0.106.0>,<0.108.0>,0.17496049324710802}}
+<0.105.0> test from <0.110.0>, {component,<0.111.0>,1}
+<0.101.0> got accept
+<0.99.0> test from <0.104.0>, {component,<0.107.0>,1}
+<0.110.0> test from <0.105.0>, {component,<0.106.0>,1}
+<0.102.0> test from <0.98.0>, {component,<0.94.0>,1}
+<0.97.0> got accept
+<0.100.0> test from <0.103.0>, {component,<0.106.0>,1}
+<0.109.0> got accept
+<0.102.0> accept to <0.98.0>
+<0.101.0> report to <0.104.0>, {candidate,<0.101.0>,{edge,<0.96.0>,<0.101.0>,0.25183139651845765}}
+<0.95.0> got reject
+<0.99.0> accept to <0.104.0>
+<0.105.0> accept to <0.110.0>
+<0.100.0> accept to <0.103.0>
+<0.110.0> accept to <0.105.0>
+<0.94.0> test from <0.91.0>, {component,<0.100.0>,1}
+<0.102.0> got reject
+<0.94.0> accept to <0.91.0>
+<0.109.0> report to <0.110.0>, {candidate,<0.109.0>,{edge,<0.114.0>,<0.109.0>,0.1837283050843871}}
+<0.102.0> test to <0.98.0>, {component,<0.106.0>,1}
+<0.94.0> got accept
+<0.104.0> test from <0.99.0>, {component,<0.100.0>,1}
+<0.104.0> accept to <0.99.0>
+<0.113.0> got report, {candidate,<0.108.0>,{edge,<0.106.0>,<0.108.0>,0.17496049324710802}}
+<0.113.0> report to <0.114.0>, {candidate,<0.113.0>,{edge,<0.106.0>,<0.108.0>,0.17496049324710802}}
+<0.91.0> got accept
+<0.110.0> got report, {candidate,<0.109.0>,{edge,<0.114.0>,<0.109.0>,0.1837283050843871}}
+<0.105.0> got accept
+<0.104.0> got report, {candidate,<0.101.0>,{edge,<0.96.0>,<0.101.0>,0.25183139651845765}}
+<0.91.0> report to <0.97.0>, {candidate,<0.91.0>,{edge,<0.94.0>,<0.91.0>,0.22079874105308245}}
+<0.105.0> report to <0.102.0>, {candidate,<0.105.0>,{edge,<0.110.0>,<0.105.0>,0.1916276437064148}}
+<0.110.0> got accept
+<0.110.0> report to <0.111.0>, {candidate,<0.110.0>,{edge,<0.114.0>,<0.109.0>,0.1837283050843871}}
+<0.103.0> got accept
+<0.98.0> got accept
+<0.98.0> report to <0.95.0>, {candidate,<0.98.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.98.0> test from <0.102.0>, {component,<0.106.0>,1}
+<0.98.0> accept to <0.102.0>
+<0.99.0> got accept
+<0.104.0> got accept
+<0.104.0> report to <0.107.0>, {candidate,<0.104.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.114.0> got report, {candidate,<0.113.0>,{edge,<0.106.0>,<0.108.0>,0.17496049324710802}}
+<0.114.0> notify to <0.113.0>
+<0.95.0> got report, {candidate,<0.98.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.95.0> report to <0.93.0>, {candidate,<0.95.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.102.0> got report, {candidate,<0.105.0>,{edge,<0.110.0>,<0.105.0>,0.1916276437064148}}
+<0.111.0> got report, {candidate,<0.110.0>,{edge,<0.114.0>,<0.109.0>,0.1837283050843871}}
+<0.97.0> got report, {candidate,<0.91.0>,{edge,<0.94.0>,<0.91.0>,0.22079874105308245}}
+<0.111.0> notify to <0.110.0>
+<0.97.0> report to <0.99.0>, {candidate,<0.97.0>,{edge,<0.96.0>,<0.97.0>,0.15745832006745197}}
+<0.102.0> got accept
+<0.102.0> report to <0.103.0>, {candidate,<0.102.0>,{edge,<0.98.0>,<0.102.0>,0.1680369394411505}}
+<0.107.0> got report, {candidate,<0.104.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.107.0> merge to <0.108.0>, 1
+<0.113.0> got notify
+<0.113.0> notify to <0.108.0>
+<0.99.0> got report, {candidate,<0.97.0>,{edge,<0.96.0>,<0.97.0>,0.15745832006745197}}
+<0.110.0> got notify
+<0.99.0> report to <0.100.0>, {candidate,<0.99.0>,{edge,<0.96.0>,<0.97.0>,0.15745832006745197}}
+<0.110.0> notify to <0.109.0>
+<0.103.0> got report, {candidate,<0.102.0>,{edge,<0.98.0>,<0.102.0>,0.1680369394411505}}
+<0.93.0> got report, {candidate,<0.95.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.103.0> report to <0.106.0>, {candidate,<0.103.0>,{edge,<0.98.0>,<0.102.0>,0.1680369394411505}}
+<0.93.0> report to <0.94.0>, {candidate,<0.93.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.108.0> got notify
+<0.108.0> merge to <0.106.0>, 1
+<0.106.0> got report, {candidate,<0.103.0>,{edge,<0.98.0>,<0.102.0>,0.1680369394411505}}
+<0.94.0> got report, {candidate,<0.93.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.109.0> got notify
+<0.106.0> notify to <0.103.0>
+<0.109.0> merge to <0.114.0>, 1
+<0.94.0> notify to <0.93.0>
+<0.100.0> got report, {candidate,<0.99.0>,{edge,<0.96.0>,<0.97.0>,0.15745832006745197}}
+<0.100.0> notify to <0.99.0>
+<0.99.0> got notify
+<0.103.0> got notify
+<0.93.0> got notify
+<0.103.0> notify to <0.102.0>
+<0.93.0> notify to <0.95.0>
+<0.99.0> notify to <0.97.0>
+<0.102.0> got notify
+<0.95.0> got notify
+<0.97.0> got notify
+<0.95.0> notify to <0.98.0>
+<0.102.0> merge to <0.98.0>, 1
+<0.97.0> merge to <0.96.0>, 1
+<0.97.0> merge from <0.96.0>, 1
+<0.97.0> update to <0.96.0>, searching {component,<0.97.0>,2}
+<0.96.0> merge from <0.97.0>, 1
+<0.98.0> got notify
+<0.98.0> merge to <0.102.0>, 1
+<0.96.0> update to <0.97.0>, searching {component,<0.97.0>,2}
+<0.98.0> merge from <0.102.0>, 1
+<0.96.0> got update, {component,<0.97.0>,2} searching
+<0.98.0> update to <0.102.0>, searching {component,<0.102.0>,2}
+<0.96.0> update to <0.92.0>, searching {component,<0.97.0>,2}
+<0.96.0> test to <0.101.0>, {component,<0.97.0>,2}
+<0.102.0> merge from <0.98.0>, 1
+<0.97.0> got update, {component,<0.97.0>,2} searching
+<0.92.0> got update, {component,<0.97.0>,2} searching
+<0.92.0> report to <0.96.0>, none
+<0.97.0> update to <0.99.0>, searching {component,<0.97.0>,2}
+<0.102.0> update to <0.98.0>, searching {component,<0.102.0>,2}
+<0.97.0> update to <0.91.0>, searching {component,<0.97.0>,2}
+<0.97.0> test to <0.91.0>, {component,<0.97.0>,2}
+<0.102.0> got update, {component,<0.102.0>,2} searching
+<0.102.0> update to <0.103.0>, searching {component,<0.102.0>,2}
+<0.102.0> update to <0.105.0>, searching {component,<0.102.0>,2}
+<0.91.0> got update, {component,<0.97.0>,2} searching
+<0.99.0> got update, {component,<0.97.0>,2} searching
+<0.96.0> got report, none
+<0.91.0> test to <0.94.0>, {component,<0.97.0>,2}
+<0.103.0> got update, {component,<0.102.0>,2} searching
+<0.98.0> got update, {component,<0.102.0>,2} searching
+<0.99.0> update to <0.100.0>, searching {component,<0.97.0>,2}
+<0.103.0> update to <0.106.0>, searching {component,<0.102.0>,2}
+<0.98.0> update to <0.95.0>, searching {component,<0.102.0>,2}
+<0.99.0> test to <0.104.0>, {component,<0.97.0>,2}
+<0.103.0> test to <0.100.0>, {component,<0.102.0>,2}
+<0.91.0> test from <0.97.0>, {component,<0.97.0>,2}
+<0.91.0> reject to <0.97.0>
+<0.105.0> got update, {component,<0.102.0>,2} searching
+<0.105.0> test to <0.110.0>, {component,<0.102.0>,2}
+<0.97.0> got reject
+<0.100.0> got update, {component,<0.97.0>,2} searching
+<0.106.0> got update, {component,<0.102.0>,2} searching
+<0.95.0> got update, {component,<0.102.0>,2} searching
+<0.100.0> test to <0.103.0>, {component,<0.97.0>,2}
+<0.106.0> test to <0.108.0>, {component,<0.102.0>,2}
+<0.95.0> update to <0.93.0>, searching {component,<0.102.0>,2}
+<0.106.0> merge (quick) from <0.108.0>, 1
+<0.100.0> test from <0.103.0>, {component,<0.102.0>,2}
+<0.106.0> update to <0.108.0>, searching {component,<0.102.0>,2}
+<0.100.0> accept to <0.103.0>
+<0.103.0> test from <0.100.0>, {component,<0.97.0>,2}
+<0.108.0> got update, {component,<0.102.0>,2} searching
+<0.93.0> got update, {component,<0.102.0>,2} searching
+<0.108.0> update to <0.113.0>, searching {component,<0.102.0>,2}
+<0.103.0> accept to <0.100.0>
+<0.93.0> update to <0.94.0>, searching {component,<0.102.0>,2}
+<0.108.0> test to <0.107.0>, {component,<0.102.0>,2}
+<0.103.0> got accept
+<0.108.0> merge (quick) from <0.107.0>, 1
+<0.108.0> update to <0.107.0>, searching {component,<0.102.0>,2}
+<0.108.0> test from <0.106.0>, {component,<0.102.0>,2}
+<0.108.0> reject to <0.106.0>
+<0.100.0> got accept
+<0.113.0> got update, {component,<0.102.0>,2} searching
+<0.107.0> got update, {component,<0.102.0>,2} searching
+<0.94.0> got update, {component,<0.102.0>,2} searching
+<0.107.0> update to <0.112.0>, searching {component,<0.102.0>,2}
+<0.113.0> update to <0.114.0>, searching {component,<0.102.0>,2}
+<0.94.0> test to <0.91.0>, {component,<0.102.0>,2}
+<0.100.0> report to <0.99.0>, {candidate,<0.100.0>,{edge,<0.103.0>,<0.100.0>,0.18478146964778192}}
+<0.107.0> update to <0.104.0>, searching {component,<0.102.0>,2}
+<0.107.0> test to <0.112.0>, {component,<0.102.0>,2}
+<0.94.0> test from <0.91.0>, {component,<0.97.0>,2}
+<0.94.0> accept to <0.91.0>
+<0.107.0> test from <0.108.0>, {component,<0.102.0>,2}
+<0.107.0> reject to <0.108.0>
+<0.106.0> got reject
+<0.106.0> test to <0.109.0>, {component,<0.102.0>,2}
+<0.91.0> test from <0.94.0>, {component,<0.102.0>,2}
+<0.114.0> got update, {component,<0.102.0>,2} searching
+<0.104.0> got update, {component,<0.102.0>,2} searching
+<0.104.0> update to <0.101.0>, searching {component,<0.102.0>,2}
+<0.114.0> test to <0.109.0>, {component,<0.102.0>,2}
+<0.91.0> accept to <0.94.0>
+<0.112.0> got update, {component,<0.102.0>,2} searching
+<0.99.0> got report, {candidate,<0.100.0>,{edge,<0.103.0>,<0.100.0>,0.18478146964778192}}
+<0.112.0> report to <0.107.0>, none
+<0.104.0> test to <0.99.0>, {component,<0.102.0>,2}
+<0.114.0> merge (quick) from <0.109.0>, 1
+<0.112.0> test from <0.107.0>, {component,<0.102.0>,2}
+<0.112.0> reject to <0.107.0>
+<0.114.0> update to <0.109.0>, searching {component,<0.102.0>,2}
+<0.91.0> got accept
+<0.91.0> report to <0.97.0>, {candidate,<0.91.0>,{edge,<0.94.0>,<0.91.0>,0.22079874105308245}}
+<0.104.0> test from <0.99.0>, {component,<0.97.0>,2}
+<0.104.0> accept to <0.99.0>
+<0.108.0> got reject
+<0.107.0> got report, none
+<0.94.0> got accept
+<0.101.0> got update, {component,<0.102.0>,2} searching
+<0.109.0> got update, {component,<0.102.0>,2} searching
+<0.101.0> test to <0.96.0>, {component,<0.102.0>,2}
+<0.109.0> update to <0.110.0>, searching {component,<0.102.0>,2}
+<0.94.0> report to <0.93.0>, {candidate,<0.94.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.107.0> got reject
+<0.99.0> test from <0.104.0>, {component,<0.102.0>,2}
+<0.109.0> test to <0.106.0>, {component,<0.102.0>,2}
+<0.101.0> test from <0.96.0>, {component,<0.97.0>,2}
+<0.99.0> accept to <0.104.0>
+<0.101.0> accept to <0.96.0>
+<0.109.0> test from <0.106.0>, {component,<0.102.0>,2}
+<0.99.0> got accept
+<0.109.0> reject to <0.106.0>
+<0.99.0> report to <0.97.0>, {candidate,<0.99.0>,{edge,<0.103.0>,<0.100.0>,0.18478146964778192}}
+<0.109.0> test from <0.114.0>, {component,<0.102.0>,2}
+<0.109.0> reject to <0.114.0>
+<0.97.0> got report, {candidate,<0.91.0>,{edge,<0.94.0>,<0.91.0>,0.22079874105308245}}
+<0.104.0> got accept
+<0.93.0> got report, {candidate,<0.94.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.110.0> got update, {component,<0.102.0>,2} searching
+<0.96.0> test from <0.101.0>, {component,<0.102.0>,2}
+<0.106.0> test from <0.109.0>, {component,<0.102.0>,2}
+<0.96.0> accept to <0.101.0>
+<0.93.0> report to <0.95.0>, {candidate,<0.93.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.110.0> update to <0.111.0>, searching {component,<0.102.0>,2}
+<0.96.0> got accept
+<0.106.0> reject to <0.109.0>
+<0.110.0> test to <0.105.0>, {component,<0.102.0>,2}
+<0.96.0> report to <0.97.0>, {candidate,<0.96.0>,{edge,<0.101.0>,<0.96.0>,0.25183139651845765}}
+<0.106.0> got reject
+<0.110.0> test from <0.105.0>, {component,<0.102.0>,2}
+<0.110.0> reject to <0.105.0>
+<0.114.0> got reject
+<0.97.0> got report, {candidate,<0.99.0>,{edge,<0.103.0>,<0.100.0>,0.18478146964778192}}
+<0.95.0> got report, {candidate,<0.93.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.109.0> got reject
+<0.95.0> report to <0.98.0>, {candidate,<0.95.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.97.0> got report, {candidate,<0.96.0>,{edge,<0.101.0>,<0.96.0>,0.25183139651845765}}
+<0.101.0> got accept
+<0.101.0> report to <0.104.0>, {candidate,<0.101.0>,{edge,<0.96.0>,<0.101.0>,0.25183139651845765}}
+<0.97.0> notify to <0.99.0>
+<0.105.0> test from <0.110.0>, {component,<0.102.0>,2}
+<0.111.0> got update, {component,<0.102.0>,2} searching
+<0.105.0> reject to <0.110.0>
+<0.111.0> report to <0.110.0>, none
+<0.105.0> got reject
+<0.105.0> report to <0.102.0>, none
+<0.99.0> got notify
+<0.104.0> got report, {candidate,<0.101.0>,{edge,<0.96.0>,<0.101.0>,0.25183139651845765}}
+<0.98.0> got report, {candidate,<0.95.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.104.0> report to <0.107.0>, {candidate,<0.104.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.99.0> notify to <0.100.0>
+<0.102.0> got report, none
+<0.110.0> got reject
+<0.98.0> report to <0.102.0>, {candidate,<0.98.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.110.0> got report, none
+<0.110.0> report to <0.109.0>, none
+<0.100.0> got notify
+<0.109.0> got report, none
+<0.102.0> got report, {candidate,<0.98.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.107.0> got report, {candidate,<0.104.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.109.0> report to <0.114.0>, none
+<0.107.0> report to <0.108.0>, {candidate,<0.107.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.100.0> merge to <0.103.0>, 2
+<0.108.0> got report, {candidate,<0.107.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.114.0> got report, none
+<0.114.0> report to <0.113.0>, none
+<0.113.0> got report, none
+<0.113.0> report to <0.108.0>, none
+<0.108.0> got report, none
+<0.108.0> report to <0.106.0>, {candidate,<0.108.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.106.0> got report, {candidate,<0.108.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.106.0> report to <0.103.0>, {candidate,<0.106.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.103.0> got report, {candidate,<0.106.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.103.0> report to <0.102.0>, {candidate,<0.103.0>,{edge,<0.100.0>,<0.103.0>,0.18478146964778192}}
+<0.102.0> got report, {candidate,<0.103.0>,{edge,<0.100.0>,<0.103.0>,0.18478146964778192}}
+<0.102.0> notify to <0.103.0>
+<0.103.0> got notify
+<0.103.0> merge to <0.100.0>, 2
+<0.103.0> merge from <0.100.0>, 2
+<0.103.0> update to <0.100.0>, searching {component,<0.103.0>,3}
+<0.100.0> merge from <0.103.0>, 2
+<0.100.0> update to <0.103.0>, searching {component,<0.103.0>,3}
+<0.100.0> got update, {component,<0.103.0>,3} searching
+<0.100.0> update to <0.99.0>, searching {component,<0.103.0>,3}
+<0.100.0> test to <0.94.0>, {component,<0.103.0>,3}
+<0.103.0> got update, {component,<0.103.0>,3} searching
+<0.99.0> got update, {component,<0.103.0>,3} searching
+<0.99.0> update to <0.97.0>, searching {component,<0.103.0>,3}
+<0.103.0> update to <0.102.0>, searching {component,<0.103.0>,3}
+<0.99.0> test to <0.104.0>, {component,<0.103.0>,3}
+<0.103.0> update to <0.106.0>, searching {component,<0.103.0>,3}
+<0.102.0> got update, {component,<0.103.0>,3} searching
+<0.97.0> got update, {component,<0.103.0>,3} searching
+<0.106.0> got update, {component,<0.103.0>,3} searching
+<0.97.0> update to <0.96.0>, searching {component,<0.103.0>,3}
+<0.102.0> update to <0.98.0>, searching {component,<0.103.0>,3}
+<0.106.0> update to <0.108.0>, searching {component,<0.103.0>,3}
+<0.97.0> update to <0.91.0>, searching {component,<0.103.0>,3}
+<0.102.0> update to <0.105.0>, searching {component,<0.103.0>,3}
+<0.96.0> got update, {component,<0.103.0>,3} searching
+<0.108.0> got update, {component,<0.103.0>,3} searching
+<0.105.0> got update, {component,<0.103.0>,3} searching
+<0.98.0> got update, {component,<0.103.0>,3} searching
+<0.108.0> update to <0.107.0>, searching {component,<0.103.0>,3}
+<0.105.0> report to <0.102.0>, none
+<0.98.0> update to <0.95.0>, searching {component,<0.103.0>,3}
+<0.96.0> update to <0.92.0>, searching {component,<0.103.0>,3}
+<0.91.0> got update, {component,<0.103.0>,3} searching
+<0.96.0> test to <0.101.0>, {component,<0.103.0>,3}
+<0.91.0> test to <0.94.0>, {component,<0.103.0>,3}
+<0.108.0> update to <0.113.0>, searching {component,<0.103.0>,3}
+<0.102.0> got report, none
+<0.113.0> got update, {component,<0.103.0>,3} searching
+<0.113.0> update to <0.114.0>, searching {component,<0.103.0>,3}
+<0.107.0> got update, {component,<0.103.0>,3} searching
+<0.95.0> got update, {component,<0.103.0>,3} searching
+<0.92.0> got update, {component,<0.103.0>,3} searching
+<0.95.0> update to <0.93.0>, searching {component,<0.103.0>,3}
+<0.107.0> update to <0.112.0>, searching {component,<0.103.0>,3}
+<0.92.0> report to <0.96.0>, none
+<0.107.0> update to <0.104.0>, searching {component,<0.103.0>,3}
+<0.93.0> got update, {component,<0.103.0>,3} searching
+<0.104.0> got update, {component,<0.103.0>,3} searching
+<0.93.0> update to <0.94.0>, searching {component,<0.103.0>,3}
+<0.112.0> got update, {component,<0.103.0>,3} searching
+<0.114.0> got update, {component,<0.103.0>,3} searching
+<0.112.0> report to <0.107.0>, none
+<0.96.0> got report, none
+<0.104.0> update to <0.101.0>, searching {component,<0.103.0>,3}
+<0.114.0> update to <0.109.0>, searching {component,<0.103.0>,3}
+<0.104.0> test to <0.99.0>, {component,<0.103.0>,3}
+<0.104.0> test from <0.99.0>, {component,<0.103.0>,3}
+<0.104.0> reject to <0.99.0>
+<0.107.0> got report, none
+<0.101.0> got update, {component,<0.103.0>,3} searching
+<0.94.0> got update, {component,<0.103.0>,3} searching
+<0.99.0> test from <0.104.0>, {component,<0.103.0>,3}
+<0.94.0> test to <0.91.0>, {component,<0.103.0>,3}
+<0.101.0> test to <0.96.0>, {component,<0.103.0>,3}
+<0.99.0> reject to <0.104.0>
+<0.109.0> got update, {component,<0.103.0>,3} searching
+<0.101.0> test from <0.96.0>, {component,<0.103.0>,3}
+<0.99.0> got reject
+<0.109.0> update to <0.110.0>, searching {component,<0.103.0>,3}
+<0.101.0> reject to <0.96.0>
+<0.94.0> test from <0.100.0>, {component,<0.103.0>,3}
+<0.94.0> reject to <0.100.0>
+<0.94.0> test from <0.91.0>, {component,<0.103.0>,3}
+<0.94.0> reject to <0.91.0>
+<0.91.0> test from <0.94.0>, {component,<0.103.0>,3}
+<0.96.0> test from <0.101.0>, {component,<0.103.0>,3}
+<0.110.0> got update, {component,<0.103.0>,3} searching
+<0.100.0> got reject
+<0.104.0> got reject
+<0.91.0> reject to <0.94.0>
+<0.110.0> update to <0.111.0>, searching {component,<0.103.0>,3}
+<0.96.0> reject to <0.101.0>
+<0.96.0> got reject
+<0.91.0> got reject
+<0.96.0> report to <0.97.0>, none
+<0.91.0> report to <0.97.0>, none
+<0.111.0> got update, {component,<0.103.0>,3} searching
+<0.101.0> got reject
+<0.97.0> got report, none
+<0.101.0> report to <0.104.0>, none
+<0.111.0> report to <0.110.0>, none
+<0.94.0> got reject
+<0.94.0> test to <0.100.0>, {component,<0.103.0>,3}
+<0.97.0> got report, none
+<0.97.0> report to <0.99.0>, none
+<0.100.0> test from <0.94.0>, {component,<0.103.0>,3}
+<0.104.0> got report, none
+<0.110.0> got report, none
+<0.100.0> reject to <0.94.0>
+<0.110.0> report to <0.109.0>, none
+<0.104.0> report to <0.107.0>, none
+<0.99.0> got report, none
+<0.99.0> report to <0.100.0>, none
+<0.94.0> got reject
+<0.109.0> got report, none
+<0.107.0> got report, none
+<0.109.0> report to <0.114.0>, none
+<0.107.0> report to <0.108.0>, none
+<0.94.0> report to <0.93.0>, none
+<0.100.0> got report, none
+<0.100.0> report to <0.103.0>, none
+<0.114.0> got report, none
+<0.108.0> got report, none
+<0.93.0> got report, none
+<0.93.0> report to <0.95.0>, none
+<0.114.0> report to <0.113.0>, none
+<0.103.0> got report, none
+<0.113.0> got report, none
+<0.95.0> got report, none
+<0.95.0> report to <0.98.0>, none
+<0.113.0> report to <0.108.0>, none
+<0.108.0> got report, none
+<0.108.0> report to <0.106.0>, none
+<0.98.0> got report, none
+<0.98.0> report to <0.102.0>, none
+<0.102.0> got report, none
+<0.106.0> got report, none
+<0.106.0> report to <0.103.0>, none
+<0.102.0> report to <0.103.0>, none
+<0.103.0> got report, none
+<0.103.0> got report, none
+<0.105.0> #{}
+<0.105.0> done to <0.9.0>
+<0.9.0> N = 23
+<0.112.0> #{}
+<0.112.0> done to <0.9.0>
+<0.91.0> #{}
+<0.9.0> N = 22
+<0.91.0> done to <0.9.0>
+<0.9.0> N = 21
+<0.101.0> #{}
+<0.92.0> #{}
+<0.92.0> done to <0.9.0>
+<0.101.0> done to <0.9.0>
+<0.94.0> #{}
+<0.9.0> N = 20
+<0.9.0> N = 19
+<0.94.0> done to <0.9.0>
+<0.9.0> N = 18
+<0.96.0> #{<0.92.0> => {edge,<0.92.0>,<0.96.0>,0.0686279566863534}}
+<0.104.0> #{<0.101.0> => {edge,<0.101.0>,<0.104.0>,0.15138486598027603}}
+<0.93.0> #{<0.94.0> => {edge,<0.94.0>,<0.93.0>,0.05794655048271923}}
+<0.93.0> done to <0.9.0>
+<0.96.0> done to <0.9.0>
+<0.104.0> done to <0.9.0>
+<0.9.0> N = 17
+<0.9.0> N = 16
+<0.9.0> N = 15
+<0.111.0> #{}
+<0.97.0> #{<0.91.0> => {edge,<0.91.0>,<0.97.0>,0.17261014341033978},<0.92.0> => {edge,<0.96.0>,<0.97.0>,0.15745832006745197},<0.96.0> => {edge,<0.96.0>,<0.97.0>,0.15745832006745197}}
+<0.107.0> #{<0.101.0> => {edge,<0.104.0>,<0.107.0>,0.08791658022464421},<0.104.0> => {edge,<0.104.0>,<0.107.0>,0.08791658022464421},<0.112.0> => {edge,<0.112.0>,<0.107.0>,0.2271452191540276}}
+<0.111.0> done to <0.9.0>
+<0.97.0> done to <0.9.0>
+<0.107.0> done to <0.9.0>
+<0.95.0> #{<0.93.0> => {edge,<0.93.0>,<0.95.0>,0.06778034560572059},<0.94.0> => {edge,<0.93.0>,<0.95.0>,0.06778034560572059}}
+<0.95.0> done to <0.9.0>
+<0.9.0> N = 14
+<0.9.0> N = 13
+<0.9.0> N = 12
+<0.9.0> N = 11
+<0.110.0> #{<0.111.0> => {edge,<0.111.0>,<0.110.0>,0.07017688843797172}}
+<0.99.0> #{<0.91.0> => {edge,<0.97.0>,<0.99.0>,0.14375097917303106},<0.92.0> => {edge,<0.97.0>,<0.99.0>,0.14375097917303106},<0.96.0> => {edge,<0.97.0>,<0.99.0>,0.14375097917303106},<0.97.0> => {edge,<0.97.0>,<0.99.0>,0.14375097917303106}}
+<0.98.0> #{<0.93.0> => {edge,<0.95.0>,<0.98.0>,0.12091940459351082},<0.94.0> => {edge,<0.95.0>,<0.98.0>,0.12091940459351082},<0.95.0> => {edge,<0.95.0>,<0.98.0>,0.12091940459351082}}
+<0.99.0> done to <0.9.0>
+<0.110.0> done to <0.9.0>
+<0.98.0> done to <0.9.0>
+<0.9.0> N = 10
+<0.9.0> N = 9
+<0.9.0> N = 8
+<0.102.0> #{<0.93.0> => {edge,<0.98.0>,<0.102.0>,0.1680369394411505},<0.94.0> => {edge,<0.98.0>,<0.102.0>,0.1680369394411505},<0.95.0> => {edge,<0.98.0>,<0.102.0>,0.1680369394411505},<0.98.0> => {edge,<0.98.0>,<0.102.0>,0.1680369394411505},<0.105.0> => {edge,<0.105.0>,<0.102.0>,0.15363856307008494}}
+<0.109.0> #{<0.110.0> => {edge,<0.110.0>,<0.109.0>,0.09891472414939516},<0.111.0> => {edge,<0.110.0>,<0.109.0>,0.09891472414939516}}
+<0.100.0> #{<0.91.0> => {edge,<0.99.0>,<0.100.0>,0.08928831952118377},<0.92.0> => {edge,<0.99.0>,<0.100.0>,0.08928831952118377},<0.96.0> => {edge,<0.99.0>,<0.100.0>,0.08928831952118377},<0.97.0> => {edge,<0.99.0>,<0.100.0>,0.08928831952118377},<0.99.0> => {edge,<0.99.0>,<0.100.0>,0.08928831952118377}}
+<0.102.0> done to <0.9.0>
+<0.109.0> done to <0.9.0>
+<0.100.0> done to <0.9.0>
+<0.9.0> N = 7
+<0.9.0> N = 6
+<0.9.0> N = 5
+<0.114.0> #{<0.109.0> => {edge,<0.109.0>,<0.114.0>,0.1837283050843871},<0.110.0> => {edge,<0.109.0>,<0.114.0>,0.1837283050843871},<0.111.0> => {edge,<0.109.0>,<0.114.0>,0.1837283050843871}}
+<0.114.0> done to <0.9.0>
+<0.9.0> N = 4
+<0.113.0> #{<0.109.0> => {edge,<0.114.0>,<0.113.0>,0.1203517076682708},<0.110.0> => {edge,<0.114.0>,<0.113.0>,0.1203517076682708},<0.111.0> => {edge,<0.114.0>,<0.113.0>,0.1203517076682708},<0.114.0> => {edge,<0.114.0>,<0.113.0>,0.1203517076682708}}
+<0.113.0> done to <0.9.0>
+<0.9.0> N = 3
+<0.108.0> #{<0.101.0> => {edge,<0.107.0>,<0.108.0>,0.18327500731059104},<0.104.0> => {edge,<0.107.0>,<0.108.0>,0.18327500731059104},<0.107.0> => {edge,<0.107.0>,<0.108.0>,0.18327500731059104},<0.109.0> => {edge,<0.113.0>,<0.108.0>,0.16690597250505565},<0.110.0> => {edge,<0.113.0>,<0.108.0>,0.16690597250505565},<0.111.0> => {edge,<0.113.0>,<0.108.0>,0.16690597250505565},<0.112.0> => {edge,<0.107.0>,<0.108.0>,0.18327500731059104},<0.113.0> => {edge,<0.113.0>,<0.108.0>,0.16690597250505565},<0.114.0> => {edge,<0.113.0>,<0.108.0>,0.16690597250505565}}
+<0.108.0> done to <0.9.0>
+<0.9.0> N = 2
+<0.106.0> #{<0.101.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.104.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.107.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.108.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.109.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.110.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.111.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.112.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.113.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.114.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802}}
+<0.106.0> done to <0.9.0>
+<0.9.0> N = 1
+<0.103.0> #{<0.91.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.92.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.93.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.94.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.95.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.96.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.97.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.98.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.99.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.100.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.101.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.102.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.104.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.105.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.106.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.107.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.108.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.109.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.110.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.111.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.112.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.113.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.114.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362}}
+<0.103.0> done to <0.9.0>
+<0.9.0> N = 1
+<0.9.0> N = 24
+<0.114.0> test to <0.113.0>, {component,<0.114.0>,0}
+<0.106.0> test to <0.103.0>, {component,<0.106.0>,0}
+<0.113.0> test to <0.114.0>, {component,<0.113.0>,0}
+<0.110.0> test to <0.111.0>, {component,<0.110.0>,0}
+<0.104.0> test to <0.107.0>, {component,<0.104.0>,0}
+<0.97.0> test to <0.99.0>, {component,<0.97.0>,0}
+<0.100.0> test to <0.99.0>, {component,<0.100.0>,0}
+<0.95.0> test to <0.93.0>, {component,<0.95.0>,0}
+<0.109.0> test to <0.110.0>, {component,<0.109.0>,0}
+<0.112.0> test to <0.107.0>, {component,<0.112.0>,0}
+<0.105.0> test to <0.102.0>, {component,<0.105.0>,0}
+<0.111.0> test to <0.110.0>, {component,<0.111.0>,0}
+<0.102.0> test to <0.103.0>, {component,<0.102.0>,0}
+<0.98.0> test to <0.95.0>, {component,<0.98.0>,0}
+<0.93.0> test to <0.94.0>, {component,<0.93.0>,0}
+<0.108.0> test to <0.113.0>, {component,<0.108.0>,0}
+<0.91.0> test to <0.97.0>, {component,<0.91.0>,0}
+<0.107.0> test to <0.104.0>, {component,<0.107.0>,0}
+<0.103.0> test to <0.106.0>, {component,<0.103.0>,0}
+<0.101.0> test to <0.104.0>, {component,<0.101.0>,0}
+<0.99.0> test to <0.100.0>, {component,<0.99.0>,0}
+<0.96.0> test to <0.92.0>, {component,<0.96.0>,0}
+<0.94.0> test to <0.93.0>, {component,<0.94.0>,0}
+<0.92.0> test to <0.96.0>, {component,<0.92.0>,0}
+<0.97.0> test from <0.91.0>, {component,<0.91.0>,0}
+<0.93.0> test from <0.94.0>, {component,<0.94.0>,0}
+<0.96.0> test from <0.92.0>, {component,<0.92.0>,0}
+<0.95.0> test from <0.98.0>, {component,<0.98.0>,0}
+<0.111.0> test from <0.110.0>, {component,<0.110.0>,0}
+<0.104.0> test from <0.107.0>, {component,<0.107.0>,0}
+<0.102.0> test from <0.105.0>, {component,<0.105.0>,0}
+<0.114.0> test from <0.113.0>, {component,<0.113.0>,0}
+<0.94.0> test from <0.93.0>, {component,<0.93.0>,0}
+<0.107.0> test from <0.104.0>, {component,<0.104.0>,0}
+<0.113.0> test from <0.108.0>, {component,<0.108.0>,0}
+<0.110.0> test from <0.111.0>, {component,<0.111.0>,0}
+<0.106.0> test from <0.103.0>, {component,<0.103.0>,0}
+<0.92.0> test from <0.96.0>, {component,<0.96.0>,0}
+<0.99.0> test from <0.97.0>, {component,<0.97.0>,0}
+<0.103.0> test from <0.102.0>, {component,<0.102.0>,0}
+<0.97.0> accept to <0.91.0>
+<0.100.0> test from <0.99.0>, {component,<0.99.0>,0}
+<0.92.0> accept to <0.96.0>
+<0.96.0> accept to <0.92.0>
+<0.99.0> accept to <0.97.0>
+<0.103.0> accept to <0.102.0>
+<0.95.0> accept to <0.98.0>
+<0.102.0> accept to <0.105.0>
+<0.103.0> test from <0.106.0>, {component,<0.106.0>,0}
+<0.107.0> accept to <0.104.0>
+<0.104.0> accept to <0.107.0>
+<0.99.0> test from <0.100.0>, {component,<0.100.0>,0}
+<0.100.0> accept to <0.99.0>
+<0.114.0> accept to <0.113.0>
+<0.103.0> accept to <0.106.0>
+<0.110.0> accept to <0.111.0>
+<0.111.0> accept to <0.110.0>
+<0.106.0> accept to <0.103.0>
+<0.113.0> accept to <0.108.0>
+<0.94.0> accept to <0.93.0>
+<0.93.0> accept to <0.94.0>
+<0.107.0> test from <0.112.0>, {component,<0.112.0>,0}
+<0.104.0> test from <0.101.0>, {component,<0.101.0>,0}
+<0.99.0> accept to <0.100.0>
+<0.93.0> test from <0.95.0>, {component,<0.95.0>,0}
+<0.110.0> test from <0.109.0>, {component,<0.109.0>,0}
+<0.93.0> accept to <0.95.0>
+<0.113.0> test from <0.114.0>, {component,<0.114.0>,0}
+<0.110.0> accept to <0.109.0>
+<0.113.0> accept to <0.114.0>
+<0.104.0> accept to <0.101.0>
+<0.107.0> accept to <0.112.0>
+<0.98.0> got accept
+<0.105.0> got accept
+<0.97.0> got accept
+<0.98.0> merge to <0.95.0>, 0
+<0.91.0> got accept
+<0.92.0> got accept
+<0.96.0> got accept
+<0.102.0> got accept
+<0.105.0> merge to <0.102.0>, 0
+<0.97.0> merge to <0.99.0>, 0
+<0.91.0> merge to <0.97.0>, 0
+<0.92.0> merge to <0.96.0>, 0
+<0.102.0> merge to <0.103.0>, 0
+<0.96.0> merge to <0.92.0>, 0
+<0.107.0> got accept
+<0.107.0> merge to <0.104.0>, 0
+<0.104.0> got accept
+<0.104.0> merge to <0.107.0>, 0
+<0.109.0> got accept
+<0.109.0> merge to <0.110.0>, 0
+<0.110.0> got accept
+<0.99.0> got accept
+<0.110.0> merge to <0.111.0>, 0
+<0.95.0> got accept
+<0.94.0> got accept
+<0.106.0> got accept
+<0.93.0> got accept
+<0.101.0> got accept
+<0.108.0> got accept
+<0.94.0> merge to <0.93.0>, 0
+<0.103.0> got accept
+<0.95.0> merge to <0.93.0>, 0
+<0.113.0> got accept
+<0.101.0> merge to <0.104.0>, 0
+<0.93.0> merge to <0.94.0>, 0
+<0.113.0> merge to <0.114.0>, 0
+<0.111.0> got accept
+<0.114.0> got accept
+<0.111.0> merge to <0.110.0>, 0
+<0.108.0> merge to <0.113.0>, 0
+<0.103.0> merge to <0.106.0>, 0
+<0.106.0> merge to <0.103.0>, 0
+<0.99.0> merge to <0.100.0>, 0
+<0.112.0> got accept
+<0.114.0> merge to <0.113.0>, 0
+<0.100.0> got accept
+<0.112.0> merge to <0.107.0>, 0
+<0.100.0> merge to <0.99.0>, 0
+<0.96.0> merge from <0.92.0>, 0
+<0.96.0> update to <0.92.0>, searching {component,<0.96.0>,1}
+<0.92.0> merge from <0.96.0>, 0
+<0.92.0> update to <0.96.0>, searching {component,<0.96.0>,1}
+<0.107.0> merge from <0.104.0>, 0
+<0.107.0> update to <0.104.0>, searching {component,<0.107.0>,1}
+<0.104.0> merge from <0.107.0>, 0
+<0.104.0> update to <0.107.0>, searching {component,<0.107.0>,1}
+<0.93.0> merge from <0.94.0>, 0
+<0.114.0> merge from <0.113.0>, 0
+<0.94.0> merge from <0.93.0>, 0
+<0.93.0> update to <0.94.0>, searching {component,<0.94.0>,1}
+<0.113.0> merge from <0.114.0>, 0
+<0.94.0> update to <0.93.0>, searching {component,<0.94.0>,1}
+<0.111.0> merge from <0.110.0>, 0
+<0.103.0> merge from <0.106.0>, 0
+<0.110.0> merge from <0.111.0>, 0
+<0.106.0> merge from <0.103.0>, 0
+<0.114.0> update to <0.113.0>, searching {component,<0.114.0>,1}
+<0.100.0> merge from <0.99.0>, 0
+<0.103.0> update to <0.106.0>, searching {component,<0.106.0>,1}
+<0.111.0> update to <0.110.0>, searching {component,<0.111.0>,1}
+<0.99.0> merge from <0.100.0>, 0
+<0.110.0> update to <0.111.0>, searching {component,<0.111.0>,1}
+<0.113.0> update to <0.114.0>, searching {component,<0.114.0>,1}
+<0.100.0> update to <0.99.0>, searching {component,<0.100.0>,1}
+<0.106.0> update to <0.103.0>, searching {component,<0.106.0>,1}
+<0.99.0> update to <0.100.0>, searching {component,<0.100.0>,1}
+<0.96.0> got update, {component,<0.96.0>,1} searching
+<0.92.0> got update, {component,<0.96.0>,1} searching
+<0.96.0> test to <0.97.0>, {component,<0.96.0>,1}
+<0.92.0> report to <0.96.0>, none
+<0.104.0> got update, {component,<0.107.0>,1} searching
+<0.107.0> got update, {component,<0.107.0>,1} searching
+<0.104.0> test to <0.101.0>, {component,<0.107.0>,1}
+<0.107.0> test to <0.108.0>, {component,<0.107.0>,1}
+<0.104.0> merge (quick) from <0.101.0>, 0
+<0.104.0> update to <0.101.0>, searching {component,<0.107.0>,1}
+<0.107.0> merge (quick) from <0.112.0>, 0
+<0.110.0> got update, {component,<0.111.0>,1} searching
+<0.107.0> update to <0.112.0>, searching {component,<0.107.0>,1}
+<0.93.0> got update, {component,<0.94.0>,1} searching
+<0.100.0> got update, {component,<0.100.0>,1} searching
+<0.111.0> got update, {component,<0.111.0>,1} searching
+<0.94.0> got update, {component,<0.94.0>,1} searching
+<0.93.0> test to <0.95.0>, {component,<0.94.0>,1}
+<0.110.0> test to <0.109.0>, {component,<0.111.0>,1}
+<0.93.0> merge (quick) from <0.95.0>, 0
+<0.99.0> got update, {component,<0.100.0>,1} searching
+<0.94.0> test to <0.91.0>, {component,<0.94.0>,1}
+<0.110.0> merge (quick) from <0.109.0>, 0
+<0.100.0> test to <0.103.0>, {component,<0.100.0>,1}
+<0.93.0> update to <0.95.0>, searching {component,<0.94.0>,1}
+<0.106.0> got update, {component,<0.106.0>,1} searching
+<0.113.0> got update, {component,<0.114.0>,1} searching
+<0.114.0> got update, {component,<0.114.0>,1} searching
+<0.110.0> update to <0.109.0>, searching {component,<0.111.0>,1}
+<0.113.0> test to <0.108.0>, {component,<0.114.0>,1}
+<0.114.0> test to <0.109.0>, {component,<0.114.0>,1}
+<0.106.0> test to <0.108.0>, {component,<0.106.0>,1}
+<0.103.0> got update, {component,<0.106.0>,1} searching
+<0.99.0> test to <0.97.0>, {component,<0.100.0>,1}
+<0.113.0> merge (quick) from <0.108.0>, 0
+<0.103.0> test to <0.102.0>, {component,<0.106.0>,1}
+<0.113.0> update to <0.108.0>, searching {component,<0.114.0>,1}
+<0.99.0> merge (quick) from <0.97.0>, 0
+<0.103.0> merge (quick) from <0.102.0>, 0
+<0.99.0> update to <0.97.0>, searching {component,<0.100.0>,1}
+<0.103.0> update to <0.102.0>, searching {component,<0.106.0>,1}
+<0.96.0> got report, none
+<0.101.0> got update, {component,<0.107.0>,1} searching
+<0.101.0> test to <0.96.0>, {component,<0.107.0>,1}
+<0.101.0> test from <0.104.0>, {component,<0.107.0>,1}
+<0.101.0> reject to <0.104.0>
+<0.95.0> got update, {component,<0.94.0>,1} searching
+<0.102.0> got update, {component,<0.106.0>,1} searching
+<0.108.0> got update, {component,<0.114.0>,1} searching
+<0.103.0> test from <0.100.0>, {component,<0.100.0>,1}
+<0.95.0> test to <0.98.0>, {component,<0.94.0>,1}
+<0.108.0> test to <0.106.0>, {component,<0.114.0>,1}
+<0.95.0> merge (quick) from <0.98.0>, 0
+<0.97.0> got update, {component,<0.100.0>,1} searching
+<0.95.0> update to <0.98.0>, searching {component,<0.94.0>,1}
+<0.103.0> accept to <0.100.0>
+<0.112.0> got update, {component,<0.107.0>,1} searching
+<0.102.0> test to <0.105.0>, {component,<0.106.0>,1}
+<0.108.0> test from <0.107.0>, {component,<0.107.0>,1}
+<0.95.0> test from <0.93.0>, {component,<0.94.0>,1}
+<0.95.0> reject to <0.93.0>
+<0.108.0> accept to <0.107.0>
+<0.102.0> merge (quick) from <0.105.0>, 0
+<0.112.0> report to <0.107.0>, none
+<0.108.0> test from <0.113.0>, {component,<0.114.0>,1}
+<0.109.0> got update, {component,<0.111.0>,1} searching
+<0.97.0> test to <0.96.0>, {component,<0.100.0>,1}
+<0.108.0> reject to <0.113.0>
+<0.102.0> update to <0.105.0>, searching {component,<0.106.0>,1}
+<0.109.0> test to <0.114.0>, {component,<0.111.0>,1}
+<0.108.0> test from <0.106.0>, {component,<0.106.0>,1}
+<0.102.0> test from <0.103.0>, {component,<0.106.0>,1}
+<0.97.0> merge (quick) from <0.91.0>, 0
+<0.108.0> accept to <0.106.0>
+<0.102.0> reject to <0.103.0>
+<0.109.0> test from <0.114.0>, {component,<0.114.0>,1}
+<0.97.0> update to <0.91.0>, searching {component,<0.100.0>,1}
+<0.109.0> accept to <0.114.0>
+<0.109.0> test from <0.110.0>, {component,<0.111.0>,1}
+<0.97.0> test from <0.96.0>, {component,<0.96.0>,1}
+<0.109.0> reject to <0.110.0>
+<0.97.0> accept to <0.96.0>
+<0.97.0> test from <0.99.0>, {component,<0.100.0>,1}
+<0.97.0> reject to <0.99.0>
+<0.96.0> test from <0.101.0>, {component,<0.107.0>,1}
+<0.104.0> got reject
+<0.104.0> test to <0.99.0>, {component,<0.107.0>,1}
+<0.96.0> accept to <0.101.0>
+<0.107.0> got report, none
+<0.96.0> test from <0.97.0>, {component,<0.100.0>,1}
+<0.98.0> got update, {component,<0.94.0>,1} searching
+<0.113.0> got reject
+<0.106.0> test from <0.108.0>, {component,<0.114.0>,1}
+<0.114.0> test from <0.109.0>, {component,<0.111.0>,1}
+<0.98.0> test to <0.102.0>, {component,<0.94.0>,1}
+<0.93.0> got reject
+<0.100.0> got accept
+<0.96.0> accept to <0.97.0>
+<0.107.0> got accept
+<0.114.0> accept to <0.109.0>
+<0.105.0> got update, {component,<0.106.0>,1} searching
+<0.106.0> accept to <0.108.0>
+<0.98.0> test from <0.95.0>, {component,<0.94.0>,1}
+<0.105.0> test to <0.110.0>, {component,<0.106.0>,1}
+<0.98.0> reject to <0.95.0>
+<0.106.0> got accept
+<0.105.0> test from <0.102.0>, {component,<0.106.0>,1}
+<0.105.0> reject to <0.102.0>
+<0.103.0> got reject
+<0.91.0> got update, {component,<0.100.0>,1} searching
+<0.103.0> test to <0.100.0>, {component,<0.106.0>,1}
+<0.91.0> test to <0.94.0>, {component,<0.100.0>,1}
+<0.110.0> got reject
+<0.91.0> test from <0.94.0>, {component,<0.94.0>,1}
+<0.99.0> got reject
+<0.110.0> test to <0.105.0>, {component,<0.111.0>,1}
+<0.91.0> accept to <0.94.0>
+<0.99.0> test to <0.104.0>, {component,<0.100.0>,1}
+<0.96.0> got accept
+<0.114.0> got accept
+<0.96.0> merge to <0.97.0>, 1
+<0.99.0> test from <0.104.0>, {component,<0.107.0>,1}
+<0.101.0> got accept
+<0.99.0> accept to <0.104.0>
+<0.101.0> report to <0.104.0>, {candidate,<0.101.0>,{edge,<0.96.0>,<0.101.0>,0.25183139651845765}}
+<0.109.0> got accept
+<0.95.0> got reject
+<0.108.0> got accept
+<0.110.0> test from <0.105.0>, {component,<0.106.0>,1}
+<0.102.0> test from <0.98.0>, {component,<0.94.0>,1}
+<0.102.0> accept to <0.98.0>
+<0.108.0> report to <0.113.0>, {candidate,<0.108.0>,{edge,<0.106.0>,<0.108.0>,0.17496049324710802}}
+<0.110.0> accept to <0.105.0>
+<0.109.0> report to <0.110.0>, {candidate,<0.109.0>,{edge,<0.114.0>,<0.109.0>,0.1837283050843871}}
+<0.97.0> got accept
+<0.105.0> test from <0.110.0>, {component,<0.111.0>,1}
+<0.102.0> got reject
+<0.94.0> test from <0.91.0>, {component,<0.100.0>,1}
+<0.105.0> accept to <0.110.0>
+<0.104.0> test from <0.99.0>, {component,<0.100.0>,1}
+<0.102.0> test to <0.98.0>, {component,<0.106.0>,1}
+<0.94.0> accept to <0.91.0>
+<0.104.0> accept to <0.99.0>
+<0.94.0> got accept
+<0.100.0> test from <0.103.0>, {component,<0.106.0>,1}
+<0.100.0> accept to <0.103.0>
+<0.104.0> got report, {candidate,<0.101.0>,{edge,<0.96.0>,<0.101.0>,0.25183139651845765}}
+<0.104.0> got accept
+<0.104.0> report to <0.107.0>, {candidate,<0.104.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.113.0> got report, {candidate,<0.108.0>,{edge,<0.106.0>,<0.108.0>,0.17496049324710802}}
+<0.110.0> got report, {candidate,<0.109.0>,{edge,<0.114.0>,<0.109.0>,0.1837283050843871}}
+<0.98.0> got accept
+<0.110.0> got accept
+<0.110.0> report to <0.111.0>, {candidate,<0.110.0>,{edge,<0.114.0>,<0.109.0>,0.1837283050843871}}
+<0.99.0> got accept
+<0.105.0> got accept
+<0.98.0> report to <0.95.0>, {candidate,<0.98.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.113.0> report to <0.114.0>, {candidate,<0.113.0>,{edge,<0.106.0>,<0.108.0>,0.17496049324710802}}
+<0.103.0> got accept
+<0.105.0> report to <0.102.0>, {candidate,<0.105.0>,{edge,<0.110.0>,<0.105.0>,0.1916276437064148}}
+<0.91.0> got accept
+<0.91.0> report to <0.97.0>, {candidate,<0.91.0>,{edge,<0.94.0>,<0.91.0>,0.22079874105308245}}
+<0.98.0> test from <0.102.0>, {component,<0.106.0>,1}
+<0.98.0> accept to <0.102.0>
+<0.107.0> got report, {candidate,<0.104.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.107.0> merge to <0.108.0>, 1
+<0.111.0> got report, {candidate,<0.110.0>,{edge,<0.114.0>,<0.109.0>,0.1837283050843871}}
+<0.114.0> got report, {candidate,<0.113.0>,{edge,<0.106.0>,<0.108.0>,0.17496049324710802}}
+<0.95.0> got report, {candidate,<0.98.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.102.0> got report, {candidate,<0.105.0>,{edge,<0.110.0>,<0.105.0>,0.1916276437064148}}
+<0.114.0> notify to <0.113.0>
+<0.111.0> notify to <0.110.0>
+<0.95.0> report to <0.93.0>, {candidate,<0.95.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.102.0> got accept
+<0.102.0> report to <0.103.0>, {candidate,<0.102.0>,{edge,<0.98.0>,<0.102.0>,0.1680369394411505}}
+<0.97.0> got report, {candidate,<0.91.0>,{edge,<0.94.0>,<0.91.0>,0.22079874105308245}}
+<0.97.0> report to <0.99.0>, {candidate,<0.97.0>,{edge,<0.96.0>,<0.97.0>,0.15745832006745197}}
+<0.93.0> got report, {candidate,<0.95.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.110.0> got notify
+<0.113.0> got notify
+<0.110.0> notify to <0.109.0>
+<0.113.0> notify to <0.108.0>
+<0.93.0> report to <0.94.0>, {candidate,<0.93.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.99.0> got report, {candidate,<0.97.0>,{edge,<0.96.0>,<0.97.0>,0.15745832006745197}}
+<0.103.0> got report, {candidate,<0.102.0>,{edge,<0.98.0>,<0.102.0>,0.1680369394411505}}
+<0.103.0> report to <0.106.0>, {candidate,<0.103.0>,{edge,<0.98.0>,<0.102.0>,0.1680369394411505}}
+<0.99.0> report to <0.100.0>, {candidate,<0.99.0>,{edge,<0.96.0>,<0.97.0>,0.15745832006745197}}
+<0.109.0> got notify
+<0.108.0> got notify
+<0.94.0> got report, {candidate,<0.93.0>,{edge,<0.102.0>,<0.98.0>,0.1680369394411505}}
+<0.109.0> merge to <0.114.0>, 1
+<0.94.0> notify to <0.93.0>
+<0.108.0> merge to <0.106.0>, 1
+<0.100.0> got report, {candidate,<0.99.0>,{edge,<0.96.0>,<0.97.0>,0.15745832006745197}}
+<0.106.0> got report, {candidate,<0.103.0>,{edge,<0.98.0>,<0.102.0>,0.1680369394411505}}
+<0.106.0> notify to <0.103.0>
+<0.100.0> notify to <0.99.0>
+<0.93.0> got notify
+<0.93.0> notify to <0.95.0>
+<0.103.0> got notify
+<0.103.0> notify to <0.102.0>
+<0.99.0> got notify
+<0.99.0> notify to <0.97.0>
+<0.95.0> got notify
+<0.95.0> notify to <0.98.0>
+<0.102.0> got notify
+<0.97.0> got notify
+<0.102.0> merge to <0.98.0>, 1
+<0.97.0> merge to <0.96.0>, 1
+<0.97.0> merge from <0.96.0>, 1
+<0.97.0> update to <0.96.0>, searching {component,<0.97.0>,2}
+<0.98.0> got notify
+<0.98.0> merge to <0.102.0>, 1
+<0.98.0> merge from <0.102.0>, 1
+<0.98.0> update to <0.102.0>, searching {component,<0.102.0>,2}
+<0.96.0> merge from <0.97.0>, 1
+<0.96.0> update to <0.97.0>, searching {component,<0.97.0>,2}
+<0.96.0> got update, {component,<0.97.0>,2} searching
+<0.96.0> update to <0.92.0>, searching {component,<0.97.0>,2}
+<0.96.0> test to <0.101.0>, {component,<0.97.0>,2}
+<0.102.0> merge from <0.98.0>, 1
+<0.102.0> update to <0.98.0>, searching {component,<0.102.0>,2}
+<0.92.0> got update, {component,<0.97.0>,2} searching
+<0.97.0> got update, {component,<0.97.0>,2} searching
+<0.92.0> report to <0.96.0>, none
+<0.97.0> update to <0.99.0>, searching {component,<0.97.0>,2}
+<0.97.0> update to <0.91.0>, searching {component,<0.97.0>,2}
+<0.97.0> test to <0.91.0>, {component,<0.97.0>,2}
+<0.102.0> got update, {component,<0.102.0>,2} searching
+<0.102.0> update to <0.103.0>, searching {component,<0.102.0>,2}
+<0.102.0> update to <0.105.0>, searching {component,<0.102.0>,2}
+<0.98.0> got update, {component,<0.102.0>,2} searching
+<0.98.0> update to <0.95.0>, searching {component,<0.102.0>,2}
+<0.96.0> got report, none
+<0.91.0> got update, {component,<0.97.0>,2} searching
+<0.91.0> test to <0.94.0>, {component,<0.97.0>,2}
+<0.99.0> got update, {component,<0.97.0>,2} searching
+<0.91.0> test from <0.97.0>, {component,<0.97.0>,2}
+<0.91.0> reject to <0.97.0>
+<0.99.0> update to <0.100.0>, searching {component,<0.97.0>,2}
+<0.99.0> test to <0.104.0>, {component,<0.97.0>,2}
+<0.103.0> got update, {component,<0.102.0>,2} searching
+<0.105.0> got update, {component,<0.102.0>,2} searching
+<0.103.0> update to <0.106.0>, searching {component,<0.102.0>,2}
+<0.105.0> test to <0.110.0>, {component,<0.102.0>,2}
+<0.103.0> test to <0.100.0>, {component,<0.102.0>,2}
+<0.95.0> got update, {component,<0.102.0>,2} searching
+<0.95.0> update to <0.93.0>, searching {component,<0.102.0>,2}
+<0.97.0> got reject
+<0.100.0> got update, {component,<0.97.0>,2} searching
+<0.100.0> test to <0.103.0>, {component,<0.97.0>,2}
+<0.106.0> got update, {component,<0.102.0>,2} searching
+<0.106.0> test to <0.108.0>, {component,<0.102.0>,2}
+<0.100.0> test from <0.103.0>, {component,<0.102.0>,2}
+<0.106.0> merge (quick) from <0.108.0>, 1
+<0.100.0> accept to <0.103.0>
+<0.106.0> update to <0.108.0>, searching {component,<0.102.0>,2}
+<0.93.0> got update, {component,<0.102.0>,2} searching
+<0.93.0> update to <0.94.0>, searching {component,<0.102.0>,2}
+<0.103.0> test from <0.100.0>, {component,<0.97.0>,2}
+<0.103.0> accept to <0.100.0>
+<0.108.0> got update, {component,<0.102.0>,2} searching
+<0.108.0> update to <0.113.0>, searching {component,<0.102.0>,2}
+<0.108.0> test to <0.107.0>, {component,<0.102.0>,2}
+<0.108.0> merge (quick) from <0.107.0>, 1
+<0.108.0> update to <0.107.0>, searching {component,<0.102.0>,2}
+<0.108.0> test from <0.106.0>, {component,<0.102.0>,2}
+<0.108.0> reject to <0.106.0>
+<0.103.0> got accept
+<0.94.0> got update, {component,<0.102.0>,2} searching
+<0.94.0> test to <0.91.0>, {component,<0.102.0>,2}
+<0.94.0> test from <0.91.0>, {component,<0.97.0>,2}
+<0.94.0> accept to <0.91.0>
+<0.100.0> got accept
+<0.100.0> report to <0.99.0>, {candidate,<0.100.0>,{edge,<0.103.0>,<0.100.0>,0.18478146964778192}}
+<0.113.0> got update, {component,<0.102.0>,2} searching
+<0.106.0> got reject
+<0.107.0> got update, {component,<0.102.0>,2} searching
+<0.113.0> update to <0.114.0>, searching {component,<0.102.0>,2}
+<0.106.0> test to <0.109.0>, {component,<0.102.0>,2}
+<0.107.0> update to <0.112.0>, searching {component,<0.102.0>,2}
+<0.107.0> update to <0.104.0>, searching {component,<0.102.0>,2}
+<0.107.0> test to <0.112.0>, {component,<0.102.0>,2}
+<0.107.0> test from <0.108.0>, {component,<0.102.0>,2}
+<0.107.0> reject to <0.108.0>
+<0.91.0> test from <0.94.0>, {component,<0.102.0>,2}
+<0.91.0> accept to <0.94.0>
+<0.91.0> got accept
+<0.91.0> report to <0.97.0>, {candidate,<0.91.0>,{edge,<0.94.0>,<0.91.0>,0.22079874105308245}}
+<0.99.0> got report, {candidate,<0.100.0>,{edge,<0.103.0>,<0.100.0>,0.18478146964778192}}
+<0.114.0> got update, {component,<0.102.0>,2} searching
+<0.112.0> got update, {component,<0.102.0>,2} searching
+<0.114.0> test to <0.109.0>, {component,<0.102.0>,2}
+<0.112.0> report to <0.107.0>, none
+<0.114.0> merge (quick) from <0.109.0>, 1
+<0.114.0> update to <0.109.0>, searching {component,<0.102.0>,2}
+<0.108.0> got reject
+<0.104.0> got update, {component,<0.102.0>,2} searching
+<0.104.0> update to <0.101.0>, searching {component,<0.102.0>,2}
+<0.104.0> test to <0.99.0>, {component,<0.102.0>,2}
+<0.104.0> test from <0.99.0>, {component,<0.97.0>,2}
+<0.104.0> accept to <0.99.0>
+<0.112.0> test from <0.107.0>, {component,<0.102.0>,2}
+<0.112.0> reject to <0.107.0>
+<0.94.0> got accept
+<0.94.0> report to <0.93.0>, {candidate,<0.94.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.97.0> got report, {candidate,<0.91.0>,{edge,<0.94.0>,<0.91.0>,0.22079874105308245}}
+<0.109.0> got update, {component,<0.102.0>,2} searching
+<0.107.0> got report, none
+<0.109.0> update to <0.110.0>, searching {component,<0.102.0>,2}
+<0.109.0> test to <0.106.0>, {component,<0.102.0>,2}
+<0.109.0> test from <0.106.0>, {component,<0.102.0>,2}
+<0.109.0> reject to <0.106.0>
+<0.109.0> test from <0.114.0>, {component,<0.102.0>,2}
+<0.101.0> got update, {component,<0.102.0>,2} searching
+<0.99.0> test from <0.104.0>, {component,<0.102.0>,2}
+<0.109.0> reject to <0.114.0>
+<0.101.0> test to <0.96.0>, {component,<0.102.0>,2}
+<0.99.0> accept to <0.104.0>
+<0.101.0> test from <0.96.0>, {component,<0.97.0>,2}
+<0.101.0> accept to <0.96.0>
+<0.99.0> got accept
+<0.99.0> report to <0.97.0>, {candidate,<0.99.0>,{edge,<0.103.0>,<0.100.0>,0.18478146964778192}}
+<0.107.0> got reject
+<0.93.0> got report, {candidate,<0.94.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.93.0> report to <0.95.0>, {candidate,<0.93.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.106.0> test from <0.109.0>, {component,<0.102.0>,2}
+<0.106.0> reject to <0.109.0>
+<0.110.0> got update, {component,<0.102.0>,2} searching
+<0.110.0> update to <0.111.0>, searching {component,<0.102.0>,2}
+<0.106.0> got reject
+<0.110.0> test to <0.105.0>, {component,<0.102.0>,2}
+<0.110.0> test from <0.105.0>, {component,<0.102.0>,2}
+<0.110.0> reject to <0.105.0>
+<0.114.0> got reject
+<0.96.0> test from <0.101.0>, {component,<0.102.0>,2}
+<0.104.0> got accept
+<0.96.0> accept to <0.101.0>
+<0.96.0> got accept
+<0.96.0> report to <0.97.0>, {candidate,<0.96.0>,{edge,<0.101.0>,<0.96.0>,0.25183139651845765}}
+<0.97.0> got report, {candidate,<0.99.0>,{edge,<0.103.0>,<0.100.0>,0.18478146964778192}}
+<0.95.0> got report, {candidate,<0.93.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.95.0> report to <0.98.0>, {candidate,<0.95.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.111.0> got update, {component,<0.102.0>,2} searching
+<0.109.0> got reject
+<0.105.0> test from <0.110.0>, {component,<0.102.0>,2}
+<0.111.0> report to <0.110.0>, none
+<0.105.0> reject to <0.110.0>
+<0.105.0> got reject
+<0.105.0> report to <0.102.0>, none
+<0.101.0> got accept
+<0.97.0> got report, {candidate,<0.96.0>,{edge,<0.101.0>,<0.96.0>,0.25183139651845765}}
+<0.97.0> notify to <0.99.0>
+<0.101.0> report to <0.104.0>, {candidate,<0.101.0>,{edge,<0.96.0>,<0.101.0>,0.25183139651845765}}
+<0.98.0> got report, {candidate,<0.95.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.98.0> report to <0.102.0>, {candidate,<0.98.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.102.0> got report, none
+<0.110.0> got reject
+<0.110.0> got report, none
+<0.110.0> report to <0.109.0>, none
+<0.99.0> got notify
+<0.99.0> notify to <0.100.0>
+<0.104.0> got report, {candidate,<0.101.0>,{edge,<0.96.0>,<0.101.0>,0.25183139651845765}}
+<0.104.0> report to <0.107.0>, {candidate,<0.104.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.102.0> got report, {candidate,<0.98.0>,{edge,<0.91.0>,<0.94.0>,0.22079874105308245}}
+<0.109.0> got report, none
+<0.109.0> report to <0.114.0>, none
+<0.100.0> got notify
+<0.100.0> merge to <0.103.0>, 2
+<0.107.0> got report, {candidate,<0.104.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.107.0> report to <0.108.0>, {candidate,<0.107.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.114.0> got report, none
+<0.114.0> report to <0.113.0>, none
+<0.108.0> got report, {candidate,<0.107.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.113.0> got report, none
+<0.113.0> report to <0.108.0>, none
+<0.108.0> got report, none
+<0.108.0> report to <0.106.0>, {candidate,<0.108.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.106.0> got report, {candidate,<0.108.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.106.0> report to <0.103.0>, {candidate,<0.106.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.103.0> got report, {candidate,<0.106.0>,{edge,<0.99.0>,<0.104.0>,0.22904409493857017}}
+<0.103.0> report to <0.102.0>, {candidate,<0.103.0>,{edge,<0.100.0>,<0.103.0>,0.18478146964778192}}
+<0.102.0> got report, {candidate,<0.103.0>,{edge,<0.100.0>,<0.103.0>,0.18478146964778192}}
+<0.102.0> notify to <0.103.0>
+<0.103.0> got notify
+<0.103.0> merge to <0.100.0>, 2
+<0.103.0> merge from <0.100.0>, 2
+<0.103.0> update to <0.100.0>, searching {component,<0.103.0>,3}
+<0.100.0> merge from <0.103.0>, 2
+<0.100.0> update to <0.103.0>, searching {component,<0.103.0>,3}
+<0.100.0> got update, {component,<0.103.0>,3} searching
+<0.100.0> update to <0.99.0>, searching {component,<0.103.0>,3}
+<0.100.0> test to <0.94.0>, {component,<0.103.0>,3}
+<0.99.0> got update, {component,<0.103.0>,3} searching
+<0.103.0> got update, {component,<0.103.0>,3} searching
+<0.103.0> update to <0.102.0>, searching {component,<0.103.0>,3}
+<0.99.0> update to <0.97.0>, searching {component,<0.103.0>,3}
+<0.99.0> test to <0.104.0>, {component,<0.103.0>,3}
+<0.103.0> update to <0.106.0>, searching {component,<0.103.0>,3}
+<0.106.0> got update, {component,<0.103.0>,3} searching
+<0.97.0> got update, {component,<0.103.0>,3} searching
+<0.102.0> got update, {component,<0.103.0>,3} searching
+<0.97.0> update to <0.96.0>, searching {component,<0.103.0>,3}
+<0.102.0> update to <0.98.0>, searching {component,<0.103.0>,3}
+<0.106.0> update to <0.108.0>, searching {component,<0.103.0>,3}
+<0.102.0> update to <0.105.0>, searching {component,<0.103.0>,3}
+<0.97.0> update to <0.91.0>, searching {component,<0.103.0>,3}
+<0.96.0> got update, {component,<0.103.0>,3} searching
+<0.105.0> got update, {component,<0.103.0>,3} searching
+<0.108.0> got update, {component,<0.103.0>,3} searching
+<0.91.0> got update, {component,<0.103.0>,3} searching
+<0.108.0> update to <0.107.0>, searching {component,<0.103.0>,3}
+<0.105.0> report to <0.102.0>, none
+<0.108.0> update to <0.113.0>, searching {component,<0.103.0>,3}
+<0.96.0> update to <0.92.0>, searching {component,<0.103.0>,3}
+<0.91.0> test to <0.94.0>, {component,<0.103.0>,3}
+<0.98.0> got update, {component,<0.103.0>,3} searching
+<0.98.0> update to <0.95.0>, searching {component,<0.103.0>,3}
+<0.96.0> test to <0.101.0>, {component,<0.103.0>,3}
+<0.92.0> got update, {component,<0.103.0>,3} searching
+<0.102.0> got report, none
+<0.107.0> got update, {component,<0.103.0>,3} searching
+<0.113.0> got update, {component,<0.103.0>,3} searching
+<0.92.0> report to <0.96.0>, none
+<0.113.0> update to <0.114.0>, searching {component,<0.103.0>,3}
+<0.107.0> update to <0.112.0>, searching {component,<0.103.0>,3}
+<0.107.0> update to <0.104.0>, searching {component,<0.103.0>,3}
+<0.95.0> got update, {component,<0.103.0>,3} searching
+<0.95.0> update to <0.93.0>, searching {component,<0.103.0>,3}
+<0.114.0> got update, {component,<0.103.0>,3} searching
+<0.96.0> got report, none
+<0.112.0> got update, {component,<0.103.0>,3} searching
+<0.104.0> got update, {component,<0.103.0>,3} searching
+<0.114.0> update to <0.109.0>, searching {component,<0.103.0>,3}
+<0.112.0> report to <0.107.0>, none
+<0.104.0> update to <0.101.0>, searching {component,<0.103.0>,3}
+<0.104.0> test to <0.99.0>, {component,<0.103.0>,3}
+<0.104.0> test from <0.99.0>, {component,<0.103.0>,3}
+<0.104.0> reject to <0.99.0>
+<0.93.0> got update, {component,<0.103.0>,3} searching
+<0.93.0> update to <0.94.0>, searching {component,<0.103.0>,3}
+<0.107.0> got report, none
+<0.101.0> got update, {component,<0.103.0>,3} searching
+<0.109.0> got update, {component,<0.103.0>,3} searching
+<0.99.0> test from <0.104.0>, {component,<0.103.0>,3}
+<0.109.0> update to <0.110.0>, searching {component,<0.103.0>,3}
+<0.99.0> reject to <0.104.0>
+<0.101.0> test to <0.96.0>, {component,<0.103.0>,3}
+<0.101.0> test from <0.96.0>, {component,<0.103.0>,3}
+<0.99.0> got reject
+<0.101.0> reject to <0.96.0>
+<0.94.0> got update, {component,<0.103.0>,3} searching
+<0.94.0> test to <0.91.0>, {component,<0.103.0>,3}
+<0.94.0> test from <0.100.0>, {component,<0.103.0>,3}
+<0.94.0> reject to <0.100.0>
+<0.94.0> test from <0.91.0>, {component,<0.103.0>,3}
+<0.94.0> reject to <0.91.0>
+<0.104.0> got reject
+<0.110.0> got update, {component,<0.103.0>,3} searching
+<0.96.0> test from <0.101.0>, {component,<0.103.0>,3}
+<0.96.0> reject to <0.101.0>
+<0.110.0> update to <0.111.0>, searching {component,<0.103.0>,3}
+<0.96.0> got reject
+<0.96.0> report to <0.97.0>, none
+<0.91.0> test from <0.94.0>, {component,<0.103.0>,3}
+<0.91.0> reject to <0.94.0>
+<0.91.0> got reject
+<0.100.0> got reject
+<0.91.0> report to <0.97.0>, none
+<0.111.0> got update, {component,<0.103.0>,3} searching
+<0.101.0> got reject
+<0.97.0> got report, none
+<0.111.0> report to <0.110.0>, none
+<0.101.0> report to <0.104.0>, none
+<0.97.0> got report, none
+<0.97.0> report to <0.99.0>, none
+<0.94.0> got reject
+<0.94.0> test to <0.100.0>, {component,<0.103.0>,3}
+<0.104.0> got report, none
+<0.110.0> got report, none
+<0.104.0> report to <0.107.0>, none
+<0.110.0> report to <0.109.0>, none
+<0.99.0> got report, none
+<0.99.0> report to <0.100.0>, none
+<0.100.0> test from <0.94.0>, {component,<0.103.0>,3}
+<0.100.0> reject to <0.94.0>
+<0.107.0> got report, none
+<0.109.0> got report, none
+<0.107.0> report to <0.108.0>, none
+<0.109.0> report to <0.114.0>, none
+<0.100.0> got report, none
+<0.100.0> report to <0.103.0>, none
+<0.94.0> got reject
+<0.94.0> report to <0.93.0>, none
+<0.108.0> got report, none
+<0.114.0> got report, none
+<0.114.0> report to <0.113.0>, none
+<0.103.0> got report, none
+<0.93.0> got report, none
+<0.93.0> report to <0.95.0>, none
+<0.113.0> got report, none
+<0.113.0> report to <0.108.0>, none
+<0.95.0> got report, none
+<0.95.0> report to <0.98.0>, none
+<0.108.0> got report, none
+<0.108.0> report to <0.106.0>, none
+<0.98.0> got report, none
+<0.98.0> report to <0.102.0>, none
+<0.106.0> got report, none
+<0.106.0> report to <0.103.0>, none
+<0.102.0> got report, none
+<0.102.0> report to <0.103.0>, none
+<0.103.0> got report, none
+<0.103.0> got report, none
+<0.105.0> #{}
+<0.105.0> done to <0.9.0>
+<0.9.0> N = 23
+<0.91.0> #{}
+<0.112.0> #{}
+<0.91.0> done to <0.9.0>
+<0.112.0> done to <0.9.0>
+<0.9.0> N = 22
+<0.9.0> N = 21
+<0.92.0> #{}
+<0.94.0> #{}
+<0.92.0> done to <0.9.0>
+<0.101.0> #{}
+<0.94.0> done to <0.9.0>
+<0.101.0> done to <0.9.0>
+<0.9.0> N = 20
+<0.9.0> N = 19
+<0.9.0> N = 18
+<0.104.0> #{<0.101.0> => {edge,<0.101.0>,<0.104.0>,0.15138486598027603}}
+<0.93.0> #{<0.94.0> => {edge,<0.94.0>,<0.93.0>,0.05794655048271923}}
+<0.104.0> done to <0.9.0>
+<0.93.0> done to <0.9.0>
+<0.96.0> #{<0.92.0> => {edge,<0.92.0>,<0.96.0>,0.0686279566863534}}
+<0.9.0> N = 17
+<0.96.0> done to <0.9.0>
+<0.9.0> N = 16
+<0.9.0> N = 15
+<0.111.0> #{}
+<0.95.0> #{<0.93.0> => {edge,<0.93.0>,<0.95.0>,0.06778034560572059},<0.94.0> => {edge,<0.93.0>,<0.95.0>,0.06778034560572059}}
+<0.107.0> #{<0.101.0> => {edge,<0.104.0>,<0.107.0>,0.08791658022464421},<0.104.0> => {edge,<0.104.0>,<0.107.0>,0.08791658022464421},<0.112.0> => {edge,<0.112.0>,<0.107.0>,0.2271452191540276}}
+<0.97.0> #{<0.91.0> => {edge,<0.91.0>,<0.97.0>,0.17261014341033978},<0.92.0> => {edge,<0.96.0>,<0.97.0>,0.15745832006745197},<0.96.0> => {edge,<0.96.0>,<0.97.0>,0.15745832006745197}}
+<0.111.0> done to <0.9.0>
+<0.107.0> done to <0.9.0>
+<0.97.0> done to <0.9.0>
+<0.95.0> done to <0.9.0>
+<0.9.0> N = 14
+<0.9.0> N = 13
+<0.9.0> N = 12
+<0.9.0> N = 11
+<0.110.0> #{<0.111.0> => {edge,<0.111.0>,<0.110.0>,0.07017688843797172}}
+<0.99.0> #{<0.91.0> => {edge,<0.97.0>,<0.99.0>,0.14375097917303106},<0.92.0> => {edge,<0.97.0>,<0.99.0>,0.14375097917303106},<0.96.0> => {edge,<0.97.0>,<0.99.0>,0.14375097917303106},<0.97.0> => {edge,<0.97.0>,<0.99.0>,0.14375097917303106}}
+<0.98.0> #{<0.93.0> => {edge,<0.95.0>,<0.98.0>,0.12091940459351082},<0.94.0> => {edge,<0.95.0>,<0.98.0>,0.12091940459351082},<0.95.0> => {edge,<0.95.0>,<0.98.0>,0.12091940459351082}}
+<0.99.0> done to <0.9.0>
+<0.98.0> done to <0.9.0>
+<0.110.0> done to <0.9.0>
+<0.9.0> N = 10
+<0.9.0> N = 9
+<0.9.0> N = 8
+<0.109.0> #{<0.110.0> => {edge,<0.110.0>,<0.109.0>,0.09891472414939516},<0.111.0> => {edge,<0.110.0>,<0.109.0>,0.09891472414939516}}
+<0.100.0> #{<0.91.0> => {edge,<0.99.0>,<0.100.0>,0.08928831952118377},<0.92.0> => {edge,<0.99.0>,<0.100.0>,0.08928831952118377},<0.96.0> => {edge,<0.99.0>,<0.100.0>,0.08928831952118377},<0.97.0> => {edge,<0.99.0>,<0.100.0>,0.08928831952118377},<0.99.0> => {edge,<0.99.0>,<0.100.0>,0.08928831952118377}}
+<0.102.0> #{<0.93.0> => {edge,<0.98.0>,<0.102.0>,0.1680369394411505},<0.94.0> => {edge,<0.98.0>,<0.102.0>,0.1680369394411505},<0.95.0> => {edge,<0.98.0>,<0.102.0>,0.1680369394411505},<0.98.0> => {edge,<0.98.0>,<0.102.0>,0.1680369394411505},<0.105.0> => {edge,<0.105.0>,<0.102.0>,0.15363856307008494}}
+<0.100.0> done to <0.9.0>
+<0.109.0> done to <0.9.0>
+<0.9.0> N = 7
+<0.102.0> done to <0.9.0>
+<0.9.0> N = 6
+<0.9.0> N = 5
+<0.114.0> #{<0.109.0> => {edge,<0.109.0>,<0.114.0>,0.1837283050843871},<0.110.0> => {edge,<0.109.0>,<0.114.0>,0.1837283050843871},<0.111.0> => {edge,<0.109.0>,<0.114.0>,0.1837283050843871}}
+<0.114.0> done to <0.9.0>
+<0.9.0> N = 4
+<0.113.0> #{<0.109.0> => {edge,<0.114.0>,<0.113.0>,0.1203517076682708},<0.110.0> => {edge,<0.114.0>,<0.113.0>,0.1203517076682708},<0.111.0> => {edge,<0.114.0>,<0.113.0>,0.1203517076682708},<0.114.0> => {edge,<0.114.0>,<0.113.0>,0.1203517076682708}}
+<0.113.0> done to <0.9.0>
+<0.9.0> N = 3
+<0.108.0> #{<0.101.0> => {edge,<0.107.0>,<0.108.0>,0.18327500731059104},<0.104.0> => {edge,<0.107.0>,<0.108.0>,0.18327500731059104},<0.107.0> => {edge,<0.107.0>,<0.108.0>,0.18327500731059104},<0.109.0> => {edge,<0.113.0>,<0.108.0>,0.16690597250505565},<0.110.0> => {edge,<0.113.0>,<0.108.0>,0.16690597250505565},<0.111.0> => {edge,<0.113.0>,<0.108.0>,0.16690597250505565},<0.112.0> => {edge,<0.107.0>,<0.108.0>,0.18327500731059104},<0.113.0> => {edge,<0.113.0>,<0.108.0>,0.16690597250505565},<0.114.0> => {edge,<0.113.0>,<0.108.0>,0.16690597250505565}}
+<0.108.0> done to <0.9.0>
+<0.9.0> N = 2
+<0.106.0> #{<0.101.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.104.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.107.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.108.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.109.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.110.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.111.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.112.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.113.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802},<0.114.0> => {edge,<0.108.0>,<0.106.0>,0.17496049324710802}}
+<0.106.0> done to <0.9.0>
+<0.9.0> N = 1
+<0.103.0> #{<0.91.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.92.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.93.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.94.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.95.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.96.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.97.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.98.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.99.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.100.0> => {edge,<0.100.0>,<0.103.0>,0.18478146964778192},<0.101.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.102.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.104.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.105.0> => {edge,<0.102.0>,<0.103.0>,0.1448986129017073},<0.106.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.107.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.108.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.109.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.110.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.111.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.112.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.113.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362},<0.114.0> => {edge,<0.106.0>,<0.103.0>,0.0593092170101362}}
+<0.103.0> done to <0.9.0>
+<0.9.0> N = 1
