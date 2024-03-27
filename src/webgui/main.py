@@ -16,16 +16,16 @@ def send_request(id_peerA, id_peerB, band):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, PEER_PORT))
     dictionary = {
-            "type": 'req_conn',
+            "type": "req_conn",
             "idA" : id_peerA,
             "idB" : id_peerB,
             "band" : band
         }
-    s.sendall(str(dictionary).encode())
+    s.sendall(json.dumps(dictionary).encode())
     data = s.recv(1024)
     s.close()
     
-    if "ACK" in data:
+    if b"ACK" in data:
         return True
     else:
         return False
@@ -34,11 +34,11 @@ def send_new(id_peer, edges):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, ADMIN_PORT))
     dictionary = {
-            "type": 'new_peer',
+            "type": "new_peer",
             "id" : id_peer,
             "edges" : edges
         }
-    s.sendall(str(dictionary).encode())
+    s.sendall(json.dumps(dictionary).encode())
     #data = s.recv(1024)
     s.close()
 
@@ -46,10 +46,10 @@ def send_kill(id_peer):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, ADMIN_PORT))
     dictionary = {
-            "type": 'rem_peer',
+            "type": "rem_peer",
             "id" : id_peer
         }
-    s.sendall(str(dictionary).encode())
+    s.sendall(json.dumps(dictionary).encode())
     #data = s.recv(1024)
     s.close()
 
