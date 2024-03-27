@@ -10,12 +10,18 @@ ADMIN_PORT = 9000
 PEER_PORT = 9001
 TCP_ADDR = "127.0.0.1"
 
-def send_request(id_peer, band):
+def send_request(id_peerA, id_peerB, band):
 
     #Open the socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, PEER_PORT))
-    s.sendall(f'{id_peer}, {band}'.encode())
+    dictionary = {
+            "type": 'req_conn',
+            "idA" : id_peerA,
+            "idB" : id_peerB,
+            "band" : band
+        }
+    s.sendall(str(dictionary).encode())
     data = s.recv(1024)
     s.close()
     
@@ -27,15 +33,24 @@ def send_request(id_peer, band):
 def send_new(id_peer, edges):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, ADMIN_PORT))
-    s.sendall(f'{id_peer}, {edges}'.encode())
-    data = s.recv(1024)
+    dictionary = {
+            "type": 'new_peer',
+            "id" : id_peer,
+            "edges" : edges
+        }
+    s.sendall(str(dictionary).encode())
+    #data = s.recv(1024)
     s.close()
 
 def send_kill(id_peer):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, ADMIN_PORT))
-    s.sendall(f'{id_peer}'.encode())
-    data = s.recv(1024)
+    dictionary = {
+            "type": 'rem_peer',
+            "id" : id_peer
+        }
+    s.sendall(str(dictionary).encode())
+    #data = s.recv(1024)
     s.close()
 
 def generate_graph(PATH, mst=False):
