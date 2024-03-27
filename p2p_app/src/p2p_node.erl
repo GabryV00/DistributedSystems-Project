@@ -15,8 +15,9 @@
 -export([start_link/1]).
 
 %% gen_server callbacks
--export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-	 terminate/2, code_change/3, format_status/2, join_network/2, get_state/1, request_to_communicate/2]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
+         code_change/3, format_status/2, join_network/2, get_state/1,
+         request_to_communicate/3, leave_network/1]).
 
 -define(SERVER, ?MODULE).
 
@@ -38,8 +39,8 @@
 %%% API
 %%%===================================================================
 
-request_to_communicate(Pid, To) ->
-    gen_server:call(Pid, {request_to_communicate, To}, 10000).
+request_to_communicate(Pid, To, Band) ->
+    gen_server:call(Pid, {request_to_communicate, To, Band}, 10000).
 
 % start_stream(To) ->
 %     gen_server:call(self(), {start_stream, To}).
@@ -50,8 +51,8 @@ request_to_communicate(Pid, To) ->
 % send_data(To) ->
 %     todo.
 
-% leave_network() ->
-%     todo.
+leave_network(Pid) ->
+    todo.
 
 join_network(Pid, Adjs) ->
     gen_server:call(Pid, {join, Adjs}, infinity).
@@ -148,7 +149,7 @@ handle_call({new_neighbor, NeighborName, Weight, MstPid}, _NodeFrom,
                  mst_computer_pid = MstComputer
                 },
     {reply, MstComputer, NewState};
-handle_call({request_to_communicate, To}, _From, #state{mst_computer_pid = MstComputer} = State) ->
+handle_call({request_to_communicate, To, Band}, _From, #state{mst_computer_pid = MstComputer} = State) ->
     MstInfo = get_mst_info(MstComputer),
     {reply, MstInfo, State};
 handle_call(_Request, _From, State) ->

@@ -1,0 +1,1 @@
+-record(edge, {dst :: pid(), src :: pid(), weight :: non_neg_integer()}).
