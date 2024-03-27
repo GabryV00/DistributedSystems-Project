@@ -11,7 +11,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0, spawn_node/3]).
+-export([start_link/1, start_link/0, spawn_node/3]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -25,11 +25,11 @@
 
 spawn_node(Supervisor, Name, Adjs) ->
     NodeSupSpec = #{id => make_ref(),
-                    start => {'p2p_sup', start_link, [Name, Adjs]},
+                    start => {'p2p_node_sup', start_link, [Name, Adjs]},
                     restart => permanent,
                     shutdown => 5000,
                     type => supervisor,
-                    modules => ['p2p_sup']},
+                    modules => ['p2p_node_sup']},
     supervisor:start_child(Supervisor, NodeSupSpec).
 
 %%--------------------------------------------------------------------
@@ -37,13 +37,15 @@ spawn_node(Supervisor, Name, Adjs) ->
 %% Starts the supervisor
 %% @end
 %%--------------------------------------------------------------------
--spec start_link() -> {ok, Pid :: pid()} |
+-spec start_link(Args :: term()) -> {ok, Pid :: pid()} |
 	  {error, {already_started, Pid :: pid()}} |
 	  {error, {shutdown, term()}} |
 	  {error, term()} |
 	  ignore.
-start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+start_link(Args) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, Args).
+
+start_link() -> start_link([]).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -62,7 +64,12 @@ start_link() ->
 	  {ok, {SupFlags :: supervisor:sup_flags(),
 		[ChildSpec :: supervisor:child_spec()]}} |
 	  ignore.
-init([]) ->
+init(Args) ->
+
+    case Args of
+        [{port, Port} | _] when is_integer(Port), Port > 1024 -> ok;
+        _ -> Port = 9000
+    end,
 
     SupFlags = #{strategy => one_for_one,
 		 intensity => 1,
@@ -74,7 +81,15 @@ init([]) ->
                    shutdown => 5000,
                    type => worker,
                    modules => ['p2p_admin']},
-    {ok, {SupFlags, [AdminNode]}}.
+
+    TcpEndpoint =  #{id => make_ref(),
+                     start => {'p2p_tcp', start_link, [Port]},
+                     restart => permanent,
+                     shutdown => 5000,
+                     type => worker,
+                     modules => ['p2p_tcp']},
+
+    {ok, {SupFlags, [AdminNode, TcpEndpoint]}}.
 
 %%%===================================================================
 %%% Internal functions

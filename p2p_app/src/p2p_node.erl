@@ -253,7 +253,7 @@ start_mst_computation(Name, Adjs, MstAdjs, MstComputerPid, SessionID) ->
 get_mst_worker(Name, Current, Supervisor) ->
     case Current of
         undefined ->
-            {ok, New} = p2p_sup:start_mst_worker(Supervisor, Name),
+            {ok, New} = p2p_node_sup:start_mst_worker(Supervisor, Name),
             New;
         _Pid ->
             Current

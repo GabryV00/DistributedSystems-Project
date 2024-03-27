@@ -6,7 +6,7 @@
 %%% @end
 %%% Created: 24 March 2024
 %%%-------------------------------------------------------------------
--module(p2p_sup).
+-module(p2p_node_sup).
 
 -behaviour(supervisor).
 
