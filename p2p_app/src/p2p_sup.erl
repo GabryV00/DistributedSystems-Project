@@ -11,7 +11,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/2, start_mst_worker/1, start_connection_handler/1]).
+-export([start_link/2, start_mst_worker/2, start_connection_handler/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -23,9 +23,9 @@
 %%%===================================================================
 
 
-start_mst_worker(SupRef) ->
+start_mst_worker(SupRef, Name) ->
     Spec = #{id => 'mst_computer',
-	       start => {ghs, start_link, []},
+	       start => {ghs, start_link, [Name]},
 	       restart => permanent,
 	       shutdown => 5000,
 	       type => worker,

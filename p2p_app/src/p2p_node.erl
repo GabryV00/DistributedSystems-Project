@@ -39,7 +39,7 @@
 %%%===================================================================
 
 request_to_communicate(Pid, To) ->
-    gen_server:call(Pid, {request_to_communicate, To}).
+    gen_server:call(Pid, {request_to_communicate, To}, 10000).
 
 % start_stream(To) ->
 %     gen_server:call(self(), {start_stream, To}).
@@ -54,7 +54,7 @@ request_to_communicate(Pid, To) ->
 %     todo.
 
 join_network(Pid, Adjs) ->
-    gen_server:call(Pid, {join, Adjs}).
+    gen_server:call(Pid, {join, Adjs}, infinity).
 
 get_state(Pid) ->
     gen_server:call(Pid, get_state).
@@ -116,12 +116,12 @@ init([Name, Adjs, Supervisor]) ->
 handle_call(get_state, _, State) ->
     {reply, State, State};
 handle_call({join, Adjs}, _From, #state{name = Name, supervisor = Supervisor, mst_computer_pid = MstComputerPid} = State) ->
-    MstComputer = get_mst_worker(MstComputerPid, Supervisor),
+    MstComputer = get_mst_worker(Name, MstComputerPid, Supervisor),
     MstAdjs = lists:map(fun(#edge{dst = Dst, weight = Weight}) ->
                       DstPid = gen_server:call(Dst, {new_neighbor, Name, Weight, MstComputer}),
                       #edge{src = MstComputer, dst = DstPid, weight = Weight}
               end, Adjs),
-    NewAdjs = Adjs ++ State#state.adjs,
+    NewAdjs = Adjs,
     SessionID = get_new_session_id(),
     start_mst_computation(Name, NewAdjs, MstAdjs, MstComputer, SessionID),
     NewState = State#state{
@@ -134,15 +134,20 @@ handle_call({join, Adjs}, _From, #state{name = Name, supervisor = Supervisor, ms
 handle_call({new_neighbor, NeighborName, Weight, MstPid}, _NodeFrom,
             #state{name = Name, adjs = Adjs, mst_computer_pid = Pid, mst_adjs = MstAdjs} = State) ->
     Supervisor = State#state.supervisor,
-    MstComputer = get_mst_worker(Pid, Supervisor),
+    MstComputer = get_mst_worker(Name, Pid, Supervisor),
+    % delete old edges to NeighborName if they already exist
+    MstAdjsWithoutNeighbor = lists:filter(fun(#edge{dst = Dst}) ->
+                                                  Dst =/= MstPid
+                                          end, MstAdjs),
+    AdjsWithoutNeighbor = lists:filter(fun(#edge{dst = Dst}) ->
+                                                  Dst =/= NeighborName
+                                          end, Adjs),
     NewState = State#state{
-                 mst_adjs = [#edge{src = MstComputer, dst = MstPid, weight = Weight} | MstAdjs],
-                 adjs = [#edge{src = Name, dst = NeighborName, weight = Weight} | Adjs],
+                 mst_adjs = [#edge{src = MstComputer, dst = MstPid, weight = Weight} | MstAdjsWithoutNeighbor],
+                 adjs = [#edge{src = Name, dst = NeighborName, weight = Weight} | AdjsWithoutNeighbor],
                  mst_computer_pid = MstComputer
                 },
     {reply, MstComputer, NewState};
-handle_call({awake, _, _}, _From, State) ->
-    {reply, ok, State};
 handle_call({request_to_communicate, To}, _From, #state{mst_computer_pid = MstComputer} = State) ->
     MstInfo = get_mst_info(MstComputer),
     {reply, MstInfo, State};
@@ -168,10 +173,9 @@ handle_cast({awake, NameFrom, SessionID}, #state{current_mst_session = CurrentMs
     Adjs = State#state.adjs,
     MstComputer = State#state.mst_computer_pid,
     MstAdjs = State#state.mst_adjs,
-    ToAwake = lists:filter(
-                fun(#edge{dst = Dst}) ->
-                        Dst =/= NameFrom
-                end , Adjs),
+    ToAwake = lists:filter(fun(#edge{dst = Dst}) ->
+                                   Dst =/= NameFrom
+                           end , Adjs),
     start_mst_computation(Name, ToAwake, MstAdjs, MstComputer, SessionID),
     {noreply, State#state{current_mst_session = SessionID}};
 handle_cast(_Request, State) ->
@@ -241,13 +245,14 @@ start_mst_computation(Name, Adjs, MstAdjs, MstComputerPid, SessionID) ->
                           gen_server:cast(Dst, {awake, Name, SessionID})
                   end,
                   Adjs),
-    MstComputerPid ! {change_adjs, MstAdjs}.
+    MstComputerPid ! {SessionID, {change_adjs, MstAdjs}}.
 
 
-get_mst_worker(Current, Supervisor) ->
+
+get_mst_worker(Name, Current, Supervisor) ->
     case Current of
         undefined ->
-            {ok, New} = p2p_sup:start_mst_worker(Supervisor),
+            {ok, New} = p2p_sup:start_mst_worker(Supervisor, Name),
             New;
         _Pid ->
             Current
@@ -261,7 +266,7 @@ get_new_session_id() ->
     end.
 
 get_mst_info(MstComputer) ->
-    MstComputer ! {self(), get_state},
+    MstComputer ! {info, {self(), get_state}},
     receive
         {MstComputer, Info} ->
             Info
