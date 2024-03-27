@@ -14,7 +14,7 @@ def send_request(id_peer, band):
 
     #Open the socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(TCP_ADDR, PEER_PORT)
+    s.connect((TCP_ADDR, PEER_PORT))
     s.sendall(id_peer, band)
     data = s.recv(1024)
     s.close()
@@ -26,19 +26,19 @@ def send_request(id_peer, band):
 
 def send_new(id_peer, edges):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(TCP_ADDR, ADMIN_PORT)
+    s.connect((TCP_ADDR, ADMIN_PORT))
     s.sendall(id_peer, edges)
     data = s.recv(1024)
     s.close()
 
 def send_kill(id_peer):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(TCP_ADDR, ADMIN_PORT)
+    s.connect((TCP_ADDR, ADMIN_PORT))
     s.sendall(id_peer)
     data = s.recv(1024)
     s.close()
 
-def generate_graph(PATH):
+def generate_graph(PATH, mst=False):
     """
     Function that generates the graph of the newtork reading the json files
     """
@@ -59,8 +59,10 @@ def generate_graph(PATH):
         for n in edges:
             g.edge(f'{id_a}', f'{n[0]}', label=f'{n[1]}', color='blue')
 
-
-    g.render('./static/graph.gv').replace('\\', '/')
+    if mst:
+        g.render('./static/mst.gv').replace('\\', '/')
+    else:
+        g.render('./static/graph.gv').replace('\\', '/')
 
 
 @app.route("/", methods=['GET', 'POST'])
