@@ -15,7 +15,7 @@ def send_request(id_peer, band):
     #Open the socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, PEER_PORT))
-    s.sendall(id_peer, band)
+    s.sendall(f'{id_peer}, {band}')
     data = s.recv(1024)
     s.close()
     
@@ -27,7 +27,7 @@ def send_request(id_peer, band):
 def send_new(id_peer, edges):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, ADMIN_PORT))
-    s.sendall(id_peer, edges)
+    s.sendall(f'{id_peer}, {edges}')
     data = s.recv(1024)
     s.close()
 
