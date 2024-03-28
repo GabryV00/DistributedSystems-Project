@@ -10,7 +10,7 @@
 -export([main/1, start/0, start_link/1]).
 
 %% MACROS
--define(LOG_FILENAME, "logs/log.txt").
+-define(LOG_FILENAME, "logs/ghs.txt").
 -define(GRAPH_FILENAME, "json/graph.json").
 -define(EVENTS_FILENAME, "json/events.json").
 -define(LATENCY, 10).
@@ -42,15 +42,16 @@
 }).
 
 
-start_link(Name) ->
-    FakeSup = spawn(fun DoNothing() ->
-                            receive
-                              Msg ->
-                                    ?LOG_DEBUG("(fake supervisor) got ~p", [Msg]),
-                                    DoNothing()
-                            end
-                    end),
-    Pid = spawn_link(fun() -> node_start(FakeSup, Name) end),
+start_link(Name) -> 
+    % FakeSup = spawn(fun DoNothing() ->
+    %                         receive
+    %                           Msg ->
+    %                                 ?LOG_DEBUG("(fake supervisor) got ~p", [Msg]),
+    %                                 DoNothing()
+    %                         end
+    %                 end),
+    logger:set_module_level(?MODULE, debug),
+    Pid = spawn_link(fun() -> node_start(Name, Name) end),
     {ok, Pid}.
 
 %% escript entry point
@@ -197,7 +198,7 @@ root_action(Node, State, _Component) ->
 
 done_action(Supervisor, State) ->
     ?LOG_DEBUG("(~p, ~p) done to ~w", [State#state.name, State#state.mst_session, Supervisor]),
-    Supervisor ! {done}.
+    Supervisor ! {done, State#state.mst_session}.
 
 
 node_start(Supervisor, Name) ->
