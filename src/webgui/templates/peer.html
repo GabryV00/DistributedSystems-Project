@@ -5,6 +5,9 @@
 </head> 
 <body> 
     <h1>PEER CONTROL PANEL</h1>
+{%  if status %}
+    <h1> THE REQUEST {{status}}</h1>
+{%  endif %}
     <hr>
     <form method="post">
         Enter the ID of the peerA: <input name="idpa"> <br><br>

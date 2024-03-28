@@ -134,9 +134,9 @@ def peer():
     
     #send data to Erlang node via TCP
     if open_conn(id_peerA, id_peerB, band):
-        return render_template('peer_good.html')
+        return render_template('peer.html', status='HAS BEEN SENT CORRECTLY')
     else:
-        return render_template('peer_error.html')
+        return render_template('peer.html', status='HAS NOT BEEN SENTED! ERROR!')
 
 @app.route("/close_conn/", methods=['GET', 'POST'])
 def close_conn():
