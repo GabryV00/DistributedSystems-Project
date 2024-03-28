@@ -17,8 +17,9 @@
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3, format_status/2, join_network/2, get_state/1,
-         request_to_communicate/3, leave_network/1]).
+         request_to_communicate/3, leave_network/1, close_connection/2, init_node_from_file/1]).
 
+-define(CONFIG_DIR, "../src/init/config_files/").
 -define(SERVER, ?MODULE).
 
 % childspecs to be used with supervisor:start_child() to ask the supervisor to
@@ -39,8 +40,27 @@
 %%% API
 %%%===================================================================
 
-request_to_communicate(Pid, To, Band) ->
-    gen_server:call(Pid, {request_to_communicate, To, Band}, 10000).
+%% @doc Extract node information (id, edges) from config file and start a node
+%% by asking the supervisor
+%% @param FileName A JSON encoded file with the node's data
+%% @end
+init_node_from_file(FileName) ->
+    try
+        {ok, Json} = file:read_file(FileName),
+        Data = jsone:decode(Json),
+        Id = utils:get_pid_from_id(maps:get(<<"id">>, Data)),
+        Edges = utils:build_edges(Id, maps:get(<<"edges">>, Data)),
+        p2p_node_sup:start_link(Id, Edges)
+    catch
+        error:{Reason, _Stack} ->
+            ?LOG_ERROR("Error: ~p during init on file ~p", [Reason, FileName])
+    end.
+
+request_to_communicate(From, To, Band) ->
+    gen_server:call(From, {request_to_communicate, To, Band}, 10000).
+
+close_connection(From, To) ->
+    gen_server:call(From, {close_connection, To}).
 
 % start_stream(To) ->
 %     gen_server:call(self(), {start_stream, To}).
@@ -51,8 +71,9 @@ request_to_communicate(Pid, To, Band) ->
 % send_data(To) ->
 %     todo.
 
+
 leave_network(Pid) ->
-    todo.
+    gen_server:call(Pid, leave).
 
 join_network(Pid, Adjs) ->
     gen_server:call(Pid, {join, Adjs}, infinity).
@@ -91,6 +112,10 @@ start_link([Name | _] = Args) ->
 	  ignore.
 init([Name, Adjs, Supervisor]) ->
     process_flag(trap_exit, true),
+    logger:set_module_level(?MODULE, debug),
+
+    ?LOG_DEBUG("(~p) Starting node with adjs ~p", [Name, Adjs]),
+
     State = #state{
           name = Name,
           adjs = Adjs,
@@ -98,6 +123,8 @@ init([Name, Adjs, Supervisor]) ->
           supervisor = Supervisor,
           current_mst_session = 0
          },
+
+    dump_config(State),
     {ok, State}.
 
 %%--------------------------------------------------------------------
@@ -115,10 +142,12 @@ init([Name, Adjs, Supervisor]) ->
 	  {noreply, NewState :: term(), hibernate} |
 	  {stop, Reason :: term(), Reply :: term(), NewState :: term()} | {stop, Reason :: term(), NewState :: term()}.
 %% Get the state of the peer
-handle_call(get_state, _, State) ->
+handle_call(get_state = Req, _, State) ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     {reply, State, State};
 %% Join the network by notifying the nodes in Adjs
-handle_call({join, Adjs}, _From, #state{name = Name, supervisor = Supervisor, mst_computer_pid = MstComputerPid} = State) ->
+handle_call({join, Adjs} = Req, _From, #state{name = Name, supervisor = Supervisor, mst_computer_pid = MstComputerPid} = State) ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     % Get a process to compute the MST from the supervisor
     MstComputer = get_mst_worker(Name, MstComputerPid, Supervisor),
     % Ask the neighbors for the pid of their MST process
@@ -139,8 +168,9 @@ handle_call({join, Adjs}, _From, #state{name = Name, supervisor = Supervisor, ms
                  current_mst_session = SessionID},
     {reply, ok, NewState};
 %% A new neighbor appeared and asks to join the network
-handle_call({new_neighbor, NeighborName, Weight, MstPid}, _NodeFrom,
+handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
             #state{name = Name, adjs = Adjs, mst_computer_pid = Pid, mst_adjs = MstAdjs} = State) ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     Supervisor = State#state.supervisor,
     % Get a process to compute the MST, if it doesn't already exist
     MstComputer = get_mst_worker(Name, Pid, Supervisor),
@@ -159,10 +189,17 @@ handle_call({new_neighbor, NeighborName, Weight, MstPid}, _NodeFrom,
     % Reply to the neighbor with the pid of the MST process
     {reply, MstComputer, NewState};
 %% Request to communicate with node To, using Band
-handle_call({request_to_communicate, To, Band}, _From, #state{mst_computer_pid = MstComputer} = State) ->
+handle_call({request_to_communicate, To, Band} = Req, _From, #state{mst_computer_pid = MstComputer} = State) ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     MstInfo = get_mst_info(MstComputer),
     {reply, MstInfo, State};
-handle_call(_Request, _From, State) ->
+handle_call(leave = Req, _From, State) ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    Reason = normal,
+    Reply = ok,
+    {stop, Reason, Reply, State};
+handle_call(Request, _From, State) ->
+    ?LOG_DEBUG("(~p) got (call) ~p, not managed", [State#state.name, Request]),
     Reply = ok,
     {reply, Reply, State}.
 
@@ -180,7 +217,8 @@ handle_call(_Request, _From, State) ->
 %% When this message is received, someone wants to start computing the MST
 %% The request is only considered if it comes from someone with a greater SessionID
 %% than the one known by the node
-handle_cast({awake, NameFrom, SessionID}, #state{current_mst_session = CurrentMstSession} = State) when SessionID > CurrentMstSession ->
+handle_cast({awake, NameFrom, SessionID} = Req, #state{current_mst_session = CurrentMstSession} = State) when SessionID > CurrentMstSession ->
+    ?LOG_DEBUG("(~p) got (cast) ~p", [State#state.name, Req]),
     Name = State#state.name,
     Adjs = State#state.adjs,
     MstComputer = State#state.mst_computer_pid,
@@ -193,7 +231,8 @@ handle_cast({awake, NameFrom, SessionID}, #state{current_mst_session = CurrentMs
     % Start to compute the MST using the new SessionID
     start_mst_computation(Name, ToAwake, MstAdjs, MstComputer, SessionID),
     {noreply, State#state{current_mst_session = SessionID}};
-handle_cast(_Request, State) ->
+handle_cast(Request, State) ->
+    ?LOG_DEBUG("(~p) got (cast) ~p, not managed", [State#state.name, Request]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -207,6 +246,9 @@ handle_cast(_Request, State) ->
 	  {noreply, NewState :: term(), Timeout :: timeout()} |
 	  {noreply, NewState :: term(), hibernate} |
 	  {stop, Reason :: normal | term(), NewState :: term()}.
+handle_info({done, _SessionID} = Msg, State) ->
+    ?LOG_DEBUG("(~p) got ~p from my MST computer", [Msg]),
+    {noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -221,7 +263,9 @@ handle_info(_Info, State) ->
 %%--------------------------------------------------------------------
 -spec terminate(Reason :: normal | shutdown | {shutdown, term()} | term(),
 		State :: term()) -> any().
-terminate(_Reason, _State) ->
+terminate(_Reason, State) ->
+    Id = extract_id(State#state.name),
+    file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
     ok.
 
 %%--------------------------------------------------------------------
@@ -307,3 +351,18 @@ get_mst_info(MstComputer) ->
         {MstComputer, Info} ->
             Info
     end.
+
+
+dump_config(State) ->
+    [_ , Id] = extract_id(State#state.name),
+    Edges = lists:map(fun(#edge{dst = Dst, weight = Weight}) ->
+                            [_, DstId] = extract_id(Dst),
+                            [list_to_integer(DstId), Weight]
+                      end, State#state.adjs),
+    Json = jsone:encode(#{<<"id">> => list_to_bitstring(Id), <<"edges">> => Edges}),
+
+    file:write_file(?CONFIG_DIR ++ "node_" ++ Id ++ ".json", Json).
+
+
+extract_id(Name) ->
+    string:split(atom_to_list(Name), "node").
