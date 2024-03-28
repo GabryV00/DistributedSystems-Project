@@ -1,4 +1,5 @@
 import os
+import time
 import json
 import socket
 import graphviz
@@ -108,6 +109,7 @@ def add_node():
     print(f'NodeID: {node_id}\nEdges:{edges}')
     
     send_new(node_id, edges)
+    time.sleep(3)
     generate_graph("./../init/config_files")
     
     return render_template('admin.html')
@@ -118,6 +120,7 @@ def remove_node():
     print(f'NodeID to remove: {node_id}')
     
     send_kill(node_id)
+    time.sleep(3)
     generate_graph("./../init/config_files")
     
     return render_template('admin.html')
