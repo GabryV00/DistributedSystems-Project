@@ -41,6 +41,7 @@ def close_conn(id_peerA, id_peerB):
             "idB" : id_peerB
         }
     s.sendall(json.dumps(dictionary).encode())
+    s.recv(1024)
     s.close()
 
 def send_new(id_peer, edges):
@@ -52,7 +53,7 @@ def send_new(id_peer, edges):
             "edges" : string_to_list(edges)
         }
     s.sendall(json.dumps(dictionary).encode())
-    #data = s.recv(1024)
+    data = s.recv(1024)
     s.close()
 
 def send_kill(id_peer):
@@ -63,7 +64,7 @@ def send_kill(id_peer):
             "id" : id_peer
         }
     s.sendall(json.dumps(dictionary).encode())
-    #data = s.recv(1024)
+    data = s.recv(1024)
     s.close()
 
 def generate_graph(PATH, mst=False):
@@ -109,7 +110,6 @@ def add_node():
     print(f'NodeID: {node_id}\nEdges:{edges}')
     
     send_new(node_id, edges)
-    time.sleep(3)
     generate_graph("./../init/config_files")
     
     return render_template('admin.html')
@@ -120,7 +120,6 @@ def remove_node():
     print(f'NodeID to remove: {node_id}')
     
     send_kill(node_id)
-    time.sleep(3)
     generate_graph("./../init/config_files")
     
     return render_template('admin.html')
