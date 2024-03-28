@@ -90,6 +90,7 @@ def generate_graph(PATH, mst=False):
     else:
         g.render('./static/graph.gv').replace('\\', '/')
 
+#----------------------ADMIN---------------------------------
 
 @app.route("/", methods=['GET', 'POST'])
 def admin():
@@ -119,6 +120,9 @@ def remove_node():
     generate_graph("./../init/config_files")
     
     return render_template('admin.html')
+
+
+#----------------------PEER---------------------------------
 
 @app.route("/peer/", methods=['GET', 'POST'])
 def peer():
