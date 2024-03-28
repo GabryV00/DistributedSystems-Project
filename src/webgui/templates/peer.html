@@ -1,11 +1,11 @@
 <!DOCTYPE html> 
 <html> 
 <head> 
-    <title>PEER PANEL CONTROL </title> 
+    <title>PEER CONTROL PANEL</title> 
 </head> 
 <body> 
-    <h1>STREAMING COMMUNICATION REQUEST</h1>
-
+    <h1>PEER CONTROL PANEL</h1>
+    <hr>
     <form method="post">
         Enter the ID of the peerA: <input name="idpa"> <br><br>
 
@@ -15,5 +15,15 @@
     
         <button type="submit">Try to establish a connection</button>
     </form>
+    <hr>
+    <form action="/close_conn" method="post">
+        Enter the ID of the peerA: <input name="idpa"> <br><br>
+
+        Enter the ID of the peerB: <input name="idpb"> <br><br>
+    
+        <button type="submit">Close the connection</button>
+    </form>
+    <hr>
+    
 </body> 
 </html>

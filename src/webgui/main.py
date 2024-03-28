@@ -10,7 +10,7 @@ ADMIN_PORT = 9000
 PEER_PORT = 9001
 TCP_ADDR = "127.0.0.1"
 
-def send_request(id_peerA, id_peerB, band):
+def open_conn(id_peerA, id_peerB, band):
 
     #Open the socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,6 +29,17 @@ def send_request(id_peerA, id_peerB, band):
         return True
     else:
         return False
+
+def close_conn(id_peerA, id_peerB):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((TCP_ADDR, PEER_PORT))
+    dictionary = {
+            "type": "close_conn",
+            "idA" : id_peerA,
+            "idB" : id_peerB
+        }
+    s.sendall(json.dumps(dictionary).encode())
+    s.close()
 
 def send_new(id_peer, edges):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -122,11 +133,21 @@ def peer():
     #return render_template('peer.html')
     
     #send data to Erlang node via TCP
-    
-    if send_request(id_peerA, id_peerB, band):
+    if open_conn(id_peerA, id_peerB, band):
         return render_template('peer_good.html')
     else:
         return render_template('peer_error.html')
+
+@app.route("/close_conn/", methods=['GET', 'POST'])
+def close_conn():
+    if request.method == 'GET':
+        return render_template('peer.html')
+    
+    id_peerA = request.form.get('idpa')
+    id_peerB = request.form.get('idpb')
+
+    close_conn(id_peerA, id_peerB)
+    return render_template('peer.html')
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080)
