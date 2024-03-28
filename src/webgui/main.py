@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request
 import os
 import json
 import socket
 import graphviz
+from utils import string_to_list
+from flask import Flask, render_template, request
 
 app = Flask(__name__, template_folder="templates")
 
@@ -47,7 +48,7 @@ def send_new(id_peer, edges):
     dictionary = {
             "type": "new_peer",
             "id" : id_peer,
-            "edges" : edges
+            "edges" : string_to_list(edges)
         }
     s.sendall(json.dumps(dictionary).encode())
     #data = s.recv(1024)
