@@ -4,7 +4,7 @@ import json
 import socket
 import graphviz
 from utils import string_to_list
-from flask import Flask, render_template, send_from_directory, request
+from flask import Flask, render_template, send_file, request
 
 app = Flask(__name__, template_folder="templates")
 
@@ -12,7 +12,7 @@ ADMIN_PORT = 9000
 PEER_PORT = 9001
 TCP_ADDR = "127.0.0.1"
 
-LOG_FILE_NAME = 'requirements.txt'
+LOG_FILE_NAME = '../../p2p_app/logs/log.txt'
 
 def open_conn(id_peerA, id_peerB, band):
 
@@ -162,7 +162,7 @@ def close_conn():
 #----------------------LOG---------------------------------
 @app.route("/log/")
 def get_file():
-    return send_from_directory(os.path.dirname(__file__), 'requirements.txt')
+    return send_file(LOG_FILE_NAME, as_attachment=True)
 
 
 if __name__ == "__main__":
