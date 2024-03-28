@@ -2,6 +2,16 @@
 <html> 
 <head> 
     <title>ADMIN CONTROL PANEL</title> 
+    <style>
+        /* CSS for fixed-size window */
+        #file-content {
+            width: 500px; /* Adjust width as needed */
+            height: 300px; /* Adjust height as needed */
+            overflow: auto; /* Add scrollbars if content exceeds dimensions */
+            border: 1px solid #ccc; /* Optional: Add border */
+            padding: 10px; /* Optional: Add padding */
+        }
+    </style>
 </head> 
 <body> 
     <h1>ADMIN CONTROL PANEL</h1>
@@ -19,6 +29,20 @@
     
         <button type="submit">Remove peer</button>
     </form>
+    <hr>
+    <h1>Real-time Log File Viewer</h1>
+    <div id="file-content">{{ content }}</div>
+
+    <p><a href="/log/" target="_blank">Download File</a></p>
+
+    <script>
+        // JavaScript to fetch file content and update the page
+        setInterval(() => {
+            fetch('/log/').then(response => response.text()).then(data => {
+                document.getElementById('file-content').innerText = data;
+            });
+        }, 1000); // Update every second (adjust as needed)
+    </script>
     <hr>
     <h1>NETWORK GRAPH</h1>
     <img src="/static/graph.gv.png"/>

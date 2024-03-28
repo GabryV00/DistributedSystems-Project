@@ -4,13 +4,15 @@ import json
 import socket
 import graphviz
 from utils import string_to_list
-from flask import Flask, render_template, request
+from flask import Flask, render_template, send_file, request
 
 app = Flask(__name__, template_folder="templates")
 
 ADMIN_PORT = 9000
 PEER_PORT = 9001
 TCP_ADDR = "127.0.0.1"
+
+LOG_FILE_NAME = '../../p2p_app/logs/log.txt'
 
 def open_conn(id_peerA, id_peerB, band):
 
@@ -67,7 +69,7 @@ def send_kill(id_peer):
     data = s.recv(1024)
     s.close()
 
-def generate_graph(PATH, mst=False):
+def generate_graph(PATH):
     """
     Function that generates the graph of the newtork reading the json files
     """
@@ -85,23 +87,22 @@ def generate_graph(PATH, mst=False):
         id_a = f[5: len(f)-5]
         with open(f'{PATH}/{f}', "r") as fl:
             edges = json.load(fl)["edges"]
+            #edges_mst = json.load(fl)["mst"]
         for n in edges:
             g.edge(f'{id_a}', f'{n[0]}', label=f'{n[1]}', color='blue')
+        #for n in edges_mst:
+        #    g.edge(f'{id_a}', f'{n[0]}', label=f'{n[1]}', color='green')
 
-    if mst:
-        g.render('./static/mst.gv').replace('\\', '/')
-    else:
-        g.render('./static/graph.gv').replace('\\', '/')
+    g.render('./static/graph.gv').replace('\\', '/')
 
 #----------------------ADMIN---------------------------------
 
 @app.route("/", methods=['GET', 'POST'])
 def admin():
-    if request.method == 'GET':
-        generate_graph("./../init/config_files")
-        return render_template('admin.html')
     generate_graph("./../init/config_files")
-    return render_template('admin.html')
+    with open(LOG_FILE_NAME, 'r') as file:
+        content = file.read()
+    return render_template('admin.html', content=content)
 
 @app.route('/add_node', methods=['POST'])
 def add_node():
@@ -111,8 +112,9 @@ def add_node():
     
     send_new(node_id, edges)
     generate_graph("./../init/config_files")
-    
-    return render_template('admin.html')
+    with open(LOG_FILE_NAME, 'r') as file:
+        content = file.read()
+    return render_template('admin.html', content=content)
 
 @app.route('/remove_node', methods=['POST'])
 def remove_node():
@@ -121,8 +123,9 @@ def remove_node():
     
     send_kill(node_id)
     generate_graph("./../init/config_files")
-    
-    return render_template('admin.html')
+    with open(LOG_FILE_NAME, 'r') as file:
+        content = file.read()
+    return render_template('admin.html', content=content)
 
 
 #----------------------PEER---------------------------------
@@ -155,6 +158,12 @@ def close_conn():
 
     close_conn(id_peerA, id_peerB)
     return render_template('peer.html')
+
+#----------------------LOG---------------------------------
+@app.route("/log/")
+def get_file():
+    return send_file(LOG_FILE_NAME, as_attachment=True)
+
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080)

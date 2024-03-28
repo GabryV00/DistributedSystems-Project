@@ -4,4 +4,4 @@
 *.beam
 rebar.lock
 /src/webgui/static/**
-__pycache__
+/src/webgui/__pycache__/**
