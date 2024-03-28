@@ -1,10 +1,7 @@
 -module(p2p_tcp).
 -export([start_link/1]).
 
--include_lib("./records.hrl").
 -include_lib("kernel/include/logger.hrl").
--define(LOG_FILENAME, "logs/tcp.txt").
-
 
 %% @doc Starts the tcp server
 %% @param Port is the port on which it will listen for requests
@@ -17,10 +14,16 @@ start_link(Args) ->
 %% @doc Setup function, starts the socket
 %% @end
 init([Port] = _Args) ->
-    start_logger(),
-    {ok, ListenSocket} = gen_tcp:listen(Port, [binary, {packet, 0},
-                                        {active, false}]),
-    loop(ListenSocket).
+    logger:set_module_level(?MODULE, debug),
+    try
+        {ok, ListenSocket} = gen_tcp:listen(Port, [binary, {packet, 0},
+                                            {active, false}]),
+        loop(ListenSocket)
+    catch
+        error:{{badmatch, _} = Reason, _Stack} ->
+            ?LOG_ERROR("(tcp) Could not start TCP socket because of ~p~n", [Reason]),
+            io:format("Could not start TCP socket because of ~p~n", [Reason])
+    end.
 
 %% @private
 %% @doc Main function that implements the server, accepts requests and spawns
@@ -31,7 +34,7 @@ loop(ListenSocket) -> loop(ListenSocket, 1).
 loop(ListenSocket, ConnNumber) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
     logger_std_h:filesync(to_file_handler),
-    ?LOG_INFO("starting connection ~p~n", [ConnNumber]),
+    ?LOG_DEBUG("(tcp) starting connection ~p~n", [ConnNumber]),
     spawn(fun() -> handle_request(Socket, ConnNumber) end),
     loop(ListenSocket, ConnNumber+1).
 
@@ -47,12 +50,12 @@ handle_request(Socket, ConnNumber) ->
             Response = <<"ACK">>,
             process_data(Data),
             % gen_tcp:close(Socket);
-            handle_request(Socket, ConnNumber),
-            gen_tcp:send(Socket, Response);
+            gen_tcp:send(Socket, Response),
+            handle_request(Socket, ConnNumber);
         {error, closed} ->
-            ?LOG_INFO("Connection closed by other side");
+            ?LOG_INFO("(tcp) Connection closed by other side");
         {error, Reason} ->
-            ?LOG_ERROR("Error receiving data: ~p~n", [Reason])
+            ?LOG_ERROR("(tcp) Error receiving data: ~p~n", [Reason])
     end.
 
 %% @private
@@ -68,68 +71,35 @@ process_data(Data) ->
         case maps:get(<<"type">>, Command) of
             % Request to communicate
             <<"req_con">> ->
-                From = get_pid_from_id(maps:get(<<"idA">>, Command)),
-                To = get_pid_from_id(maps:get(<<"idB">>, Command)),
+                From = utils:get_pid_from_id(maps:get(<<"idA">>, Command)),
+                To = utils:get_pid_from_id(maps:get(<<"idB">>, Command)),
                 Band = maps:get(<<"band">>, Command), % number
                 p2p_node:request_to_communicate(From, To, Band),
-                ?LOG_INFO("~p asked ~p to communicate with bandwidth ~p", [From, To, Band]);
+                ?LOG_DEBUG("(tcp) ~p asked ~p to communicate with bandwidth ~p", [From, To, Band]);
             % New peer added to the network
             <<"new_peer">> ->
-                Id = get_pid_from_id(maps:get(<<"id">>, Command)),
-                Adjs = build_edges(Id, maps:get(<<"edges">>, Command)),
-                p2p_node_sup:start_link(Id, Adjs),
-                ?LOG_INFO("~p started with adjs ~p~n", [Id, Adjs]);
+                Id = utils:get_pid_from_id(maps:get(<<"id">>, Command)),
+                Adjs = utils:build_edges(Id, maps:get(<<"edges">>, Command)),
+                p2p_admin:spawn_node(Id, Adjs),
+                io:format("new peer created"),
+                ?LOG_DEBUG("(tcp) ~p started with adjs ~p~n", [Id, Adjs]);
             % Peer removed from the network
             <<"rem_peer">> ->
-                Id = get_pid_from_id(maps:get(<<"id">>, Command)),
+                Id = utils:get_pid_from_id(maps:get(<<"id">>, Command)),
                 p2p_node:leave_network(Id),
-                ?LOG_INFO("~p left the network", [Id])
+                io:format("peer removed"),
+                ?LOG_DEBUG("(tcp) ~p left the network", [Id]);
+            % Close the connection between two peers
+            <<"close_conn">> ->
+                From = utils:get_pid_from_id(maps:get(<<"idA">>, Command)),
+                To = utils:get_pid_from_id(maps:get(<<"idB">>, Command)),
+                p2p_node:close_connection(From, To),
+                ?LOG_DEBUG("(tcp) Closed connection between ~p and ~p", [From, To])
         end
     catch
         error:{badarg, _Stack} ->
-            ?LOG_ERROR("Data not in JSON format: ~p~n", [Data]);
-        error:Error ->
-            ?LOG_ERROR("Error during data processing: ~p", [Error])
+            ?LOG_ERROR("(tcp) Data not in JSON format: ~p~n", [Data]);
+        error:{Reason, Stack} ->
+            ?LOG_ERROR("(tcp) Error:~p while processing: ~p ~p", [Reason, Data, Stack])
     end.
-
-%% @private
-%% @doc Transforms numeric ID into atom that represents the peer node
-%% @end
-get_pid_from_id(Id) when is_number(Id)->
-    list_to_atom("node" ++ integer_to_list(Id)).
-
-
-%% @private
-%% @doc Transforms the edges from JSON into internal format
-%% @param Src Is the node from which the edge goes out
-%% @param Edges Are the outgoing edges in form [Dst, Weight]
-%% @end
-build_edges(Src, Edges) when is_list(Edges)->
-    lists:map(fun([Dst, Weight]) ->
-                #edge{src = get_pid_from_id(Src),
-                      dst = get_pid_from_id(Dst),
-                      weight = Weight}
-              end, Edges).
-
-
-%% @private
-start_logger() ->
-    logger:set_module_level(?MODULE, debug),
-    Config = #{
-        config => #{
-            file => ?LOG_FILENAME,
-            % prevent flushing (delete)
-            flush_qlen => 100000,
-            % disable drop mode
-            drop_mode_qlen => 100000,
-            % disable burst detection
-            burst_limit_enable => false
-        },
-        level => info,
-        modes => [write],
-        formatter => {logger_formatter, #{template => [pid, " ", msg, "\n"]}}
-    },
-    logger:add_handler(to_file_handler, logger_std_h, Config),
-    logger:set_handler_config(default, level, notice),
-    ?LOG_DEBUG("===== LOG START =====").
 
