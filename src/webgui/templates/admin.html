@@ -20,6 +20,20 @@
         <button type="submit">Remove peer</button>
     </form>
     <hr>
+    <h1>Real-time Log File Viewer</h1>
+    <div id="file-content">{{ content }}</div>
+
+    <p><a href="/log/" target="_blank">Download File</a></p>
+
+    <script>
+        // JavaScript to fetch file content and update the page
+        setInterval(() => {
+            fetch('/log/').then(response => response.text()).then(data => {
+                document.getElementById('file-content').innerText = data;
+            });
+        }, 1000); // Update every second (adjust as needed)
+    </script>
+    <hr>
     <h1>NETWORK GRAPH</h1>
     <img src="/static/graph.gv.png"/>
 </body> 

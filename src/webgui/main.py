@@ -4,13 +4,15 @@ import json
 import socket
 import graphviz
 from utils import string_to_list
-from flask import Flask, render_template, request
+from flask import Flask, render_template, send_from_directory, request
 
 app = Flask(__name__, template_folder="templates")
 
 ADMIN_PORT = 9000
 PEER_PORT = 9001
 TCP_ADDR = "127.0.0.1"
+
+LOG_FILE_NAME = 'requirements.txt'
 
 def open_conn(id_peerA, id_peerB, band):
 
@@ -97,11 +99,10 @@ def generate_graph(PATH, mst=False):
 
 @app.route("/", methods=['GET', 'POST'])
 def admin():
-    if request.method == 'GET':
-        generate_graph("./../init/config_files")
-        return render_template('admin.html')
     generate_graph("./../init/config_files")
-    return render_template('admin.html')
+    with open(LOG_FILE_NAME, 'r') as file:
+        content = file.read()
+    return render_template('admin.html', content=content)
 
 @app.route('/add_node', methods=['POST'])
 def add_node():
@@ -111,8 +112,9 @@ def add_node():
     
     send_new(node_id, edges)
     generate_graph("./../init/config_files")
-    
-    return render_template('admin.html')
+    with open(LOG_FILE_NAME, 'r') as file:
+        content = file.read()
+    return render_template('admin.html', content=content)
 
 @app.route('/remove_node', methods=['POST'])
 def remove_node():
@@ -121,8 +123,9 @@ def remove_node():
     
     send_kill(node_id)
     generate_graph("./../init/config_files")
-    
-    return render_template('admin.html')
+    with open(LOG_FILE_NAME, 'r') as file:
+        content = file.read()
+    return render_template('admin.html', content=content)
 
 
 #----------------------PEER---------------------------------
@@ -155,6 +158,12 @@ def close_conn():
 
     close_conn(id_peerA, id_peerB)
     return render_template('peer.html')
+
+#----------------------LOG---------------------------------
+@app.route("/log/")
+def get_file():
+    return send_from_directory(os.path.dirname(__file__), 'requirements.txt')
+
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080)
