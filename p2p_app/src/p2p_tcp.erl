@@ -21,8 +21,7 @@ init([Port] = _Args) ->
         loop(ListenSocket)
     catch
         error:{{badmatch, _} = Reason, _Stack} ->
-            ?LOG_ERROR("(tcp) Could not start TCP socket because of ~p~n", [Reason]),
-            io:format("Could not start TCP socket because of ~p~n", [Reason])
+            ?LOG_ERROR("(tcp) Could not start TCP socket because of ~p~n", [Reason])
     end.
 
 %% @private
@@ -81,13 +80,11 @@ process_data(Data) ->
                 Id = utils:get_pid_from_id(maps:get(<<"id">>, Command)),
                 Adjs = utils:build_edges(Id, maps:get(<<"edges">>, Command)),
                 p2p_admin:spawn_node(Id, Adjs),
-                io:format("new peer created"),
                 ?LOG_DEBUG("(tcp) ~p started with adjs ~p~n", [Id, Adjs]);
             % Peer removed from the network
             <<"rem_peer">> ->
                 Id = utils:get_pid_from_id(maps:get(<<"id">>, Command)),
                 p2p_node:leave_network(Id),
-                io:format("peer removed"),
                 ?LOG_DEBUG("(tcp) ~p left the network", [Id]);
             % Close the connection between two peers
             <<"close_conn">> ->
