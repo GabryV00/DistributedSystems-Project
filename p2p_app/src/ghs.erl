@@ -220,34 +220,34 @@ node_start(Supervisor, Name) ->
 % THE CHAIN OF CALLS COULD BE SIMPLIFIED
 node_loop(Node, State, Component) ->
     % update visualization (core node, parent link, selected children, rejected edges)
-    % Core = Component#component.core,
-    % case self() of
-    %     Core -> events:process_state({core, Component#component.level});
-    %     _ -> events:process_state({normal, 0})
-    % end,
-    % ParentLink = Node#node.parent,
-    % case ParentLink of
-    %     none -> ok;
-    %     _ ->
-    %         % events:link_state(ParentLink#edge.dst, ParentLink#edge.src, deleted), % maybe remove this
-    %         events:link_state(ParentLink#edge.src, ParentLink#edge.dst, accepted)
-    % end,
-    % lists:foreach(fun (Link) ->
-    %                   case Link of
-    %                       ParentLink -> ok;
-    %                       _ ->
-    %                           events:link_state(Link#edge.src, Link#edge.dst, deleted)
-    %                   end
-    %               end,
-    %               Node#node.children),
-    % lists:foreach(fun (Link) ->
-    %                   case Link of
-    %                       ParentLink -> ok;
-    %                       _ ->
-    %                           events:link_state(Link#edge.src, Link#edge.dst, rejected)
-    %                   end
-    %               end,
-    %               Node#node.rejected),
+    Core = Component#component.core,
+    case self() of
+        Core -> events:process_state({core, Component#component.level});
+        _ -> events:process_state({normal, 0})
+    end,
+    ParentLink = Node#node.parent,
+    case ParentLink of
+        none -> ok;
+        _ ->
+            % events:link_state(ParentLink#edge.dst, ParentLink#edge.src, deleted), % maybe remove this
+            events:link_state(ParentLink#edge.src, ParentLink#edge.dst, accepted)
+    end,
+    lists:foreach(fun (Link) ->
+                      case Link of
+                          ParentLink -> ok;
+                          _ ->
+                              events:link_state(Link#edge.src, Link#edge.dst, deleted)
+                      end
+                  end,
+                  Node#node.children),
+    lists:foreach(fun (Link) ->
+                      case Link of
+                          ParentLink -> ok;
+                          _ ->
+                              events:link_state(Link#edge.src, Link#edge.dst, rejected)
+                      end
+                  end,
+                  Node#node.rejected),
     events:tick(),
 
     % message consumption
