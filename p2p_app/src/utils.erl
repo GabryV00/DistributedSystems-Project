@@ -1,5 +1,5 @@
 -module(utils).
--export([get_pid_from_id/1, build_edges/2]).
+-export([get_pid_from_id/1, build_edges/2, init_network/1]).
 
 -include("records.hrl").
 
@@ -22,3 +22,10 @@ build_edges(Src, Edges) when is_list(Edges)->
                       dst = get_pid_from_id(Dst),
                       weight = Weight}
               end, Edges).
+
+init_network(InitDir) ->
+    {ok, Files} = file:list_dir(InitDir),
+    CompletePaths = [InitDir ++ File || File <- Files],
+    NodesWithEdges = lists:map(fun p2p_node:init_node_from_file/1, CompletePaths),
+    lists:foreach(fun({Node, Edges}) -> p2p_node:join_network(Node, Edges) end, NodesWithEdges),
+    _Nodes = [Node || {Node, _Edge} <- NodesWithEdges].

@@ -69,11 +69,7 @@ start(InitDir) ->
     ?LOG_DEBUG("Initializing network from ~p", [InitDir]),
     p2p_admin_sup:start_link(),
     p2p_node_manager:start_link(),
-    {ok, Files} = file:list_dir(InitDir),
-    CompletePaths = [InitDir ++ File || File <- Files],
-    lists:foreach(fun p2p_node:init_node_from_file/1, CompletePaths),
+    utils:init_network(InitDir),
     loop().
 
 loop() -> loop().
-
-
