@@ -17,7 +17,8 @@
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3, format_status/2, join_network/2, get_state/1,
-         request_to_communicate/3, leave_network/1, close_connection/2, init_node_from_file/1]).
+         request_to_communicate/3, leave_network/1, close_connection/2,
+         init_node_from_file/1, start_mst_computation/1]).
 
 -define(CONFIG_DIR, "../src/init/config_files/").
 -define(SERVER, ?MODULE).
@@ -33,7 +34,8 @@
           conn_supervisor :: pid(),
           current_mst_session :: term(),
           connections = [] :: list(),
-          mst_computer_pid :: pid()
+          mst_computer_pid :: pid(),
+          mst_computed :: boolean()
          }).
 
 %%%===================================================================
@@ -50,14 +52,16 @@ init_node_from_file(FileName) ->
         Data = jsone:decode(Json),
         Id = utils:get_pid_from_id(maps:get(<<"id">>, Data)),
         Edges = utils:build_edges(Id, maps:get(<<"edges">>, Data)),
-        p2p_node_sup:start_link(Id, Edges)
+        p2p_node_manager:spawn_node(Id, []),
+        ?LOG_DEBUG("Node ~p started from file ~p", [Id, FileName]),
+        {Id, Edges}
     catch
         error:{Reason, _Stack} ->
             ?LOG_ERROR("Error: ~p during init on file ~p", [Reason, FileName])
     end.
 
 request_to_communicate(From, To, Band) ->
-    gen_server:call(From, {request_to_communicate, To, Band}, 10000).
+    gen_server:call(From, {request_to_communicate, To, Band}).
 
 close_connection(From, To) ->
     gen_server:call(From, {close_connection, To}).
@@ -71,15 +75,47 @@ close_connection(From, To) ->
 % send_data(To) ->
 %     todo.
 
+start_mst_computation(Ref) ->
+    gen_server:call(Ref, start_mst).
 
-leave_network(Pid) ->
-    gen_server:call(Pid, leave).
+leave_network(Ref) ->
+    try
+        gen_server:call(Ref, leave)
+    catch
+        exit:{timeout, _Location} ->
+            exit(Ref, shutdown);
+        exit:{noproc, _Location} ->
+            ok;
+        exit:{shutdown, _Location} ->
+            ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [Ref])
+    end.
 
-join_network(Pid, Adjs) ->
-    gen_server:call(Pid, {join, Adjs}, infinity).
 
-get_state(Pid) ->
-    gen_server:call(Pid, get_state).
+join_network(Ref, Adjs) when is_atom(Ref) ->
+    try
+        validate_edges(Ref, Adjs),
+        Reply = gen_server:call(Ref, {join, Adjs}),
+        case Reply of
+            ok -> ok;
+            _ -> todo
+        end
+    catch
+        throw:edges_not_valid ->
+            ?LOG_ERROR("Edges are not valid");
+        exit:{timeout, _Location} ->
+            ?LOG_ERROR("Request to join to ~p timed out");
+        exit:{noproc, _Location} ->
+            p2p_node_manager:spawn_node(Ref, Adjs),
+            join_network(Ref, Adjs);
+        exit:{shutdown, _Location} ->
+            ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [Ref])
+    end;
+
+join_network(_Ref, _) ->
+    throw(name_not_valid).
+
+get_state(Ref) ->
+    gen_server:call(Ref, get_state).
 
 
 
@@ -112,7 +148,7 @@ start_link([Name | _] = Args) ->
 	  ignore.
 init([Name, Adjs, Supervisor]) ->
     process_flag(trap_exit, true),
-    logger:set_module_level(?MODULE, debug),
+    logger:set_module_level(?MODULE, error),
 
     ?LOG_DEBUG("(~p) Starting node with adjs ~p", [Name, Adjs]),
 
@@ -121,7 +157,9 @@ init([Name, Adjs, Supervisor]) ->
           adjs = Adjs,
           mst_adjs = [],
           supervisor = Supervisor,
-          current_mst_session = 0
+          current_mst_session = 0,
+          mst_computed = false,
+          mst_computer_pid = undefined
          },
 
     dump_config(State),
@@ -151,21 +189,18 @@ handle_call({join, Adjs} = Req, _From, #state{name = Name, supervisor = Supervis
     % Get a process to compute the MST from the supervisor
     MstComputer = get_mst_worker(Name, MstComputerPid, Supervisor),
     % Ask the neighbors for the pid of their MST process
-    MstAdjs = lists:map(fun(#edge{dst = Dst, weight = Weight}) ->
-                      DstPid = gen_server:call(Dst, {new_neighbor, Name, Weight, MstComputer}),
-                      #edge{src = MstComputer, dst = DstPid, weight = Weight}
-              end, Adjs),
+    MstAdjsTemp = get_neighbors_mst_pid(Adjs, Name, MstComputer),
+    ?LOG_DEBUG("(~p) Mst Pid of neighbors ~p", [State#state.name, MstAdjsTemp]),
+    MstAdjs = proplists:get_all_values(ok, MstAdjsTemp),
+    ?LOG_DEBUG("(~p) Mst Pid of neighbors who answered ~p", [State#state.name, MstAdjs]),
+    Unreachable = proplists:get_all_values(timed_out, MstAdjsTemp),
     % Update the neighbor list
-    NewAdjs = Adjs,
-    % Get a new MST session ID from the Admin, this will be used to compute the MST
-    SessionID = get_new_session_id(),
-    % Notify neighbors and start to compute the MST
-    start_mst_computation(Name, NewAdjs, MstAdjs, MstComputer, SessionID),
+    NewAdjs = lists:subtract(Adjs, Unreachable),
     NewState = State#state{
                  adjs = NewAdjs,
                  mst_computer_pid = MstComputer,
-                 mst_adjs = MstAdjs,
-                 current_mst_session = SessionID},
+                 mst_adjs = MstAdjs},
+    dump_config(NewState),
     {reply, ok, NewState};
 %% A new neighbor appeared and asks to join the network
 handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
@@ -174,21 +209,39 @@ handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
     Supervisor = State#state.supervisor,
     % Get a process to compute the MST, if it doesn't already exist
     MstComputer = get_mst_worker(Name, Pid, Supervisor),
-    % Delete old edges to NeighborName if they already exist
-    MstAdjsWithoutNeighbor = lists:filter(fun(#edge{dst = Dst}) ->
-                                                  Dst =/= MstPid
-                                          end, MstAdjs),
-    AdjsWithoutNeighbor = lists:filter(fun(#edge{dst = Dst}) ->
-                                                  Dst =/= NeighborName
-                                          end, Adjs),
+
+    case lists:keyfind(MstPid, 2, MstAdjs) of
+         false ->
+            NewMstAdjs = [#edge{src = MstComputer, dst = MstPid, weight = Weight} | MstAdjs];
+         _ ->
+            NewMstAdjs = MstAdjs
+    end,
+
+    case lists:keyfind(NeighborName, 2, Adjs) of
+         false ->
+            NewAdjs = [#edge{src = Name, dst = NeighborName, weight = Weight} | Adjs];
+         _ ->
+            NewAdjs = Adjs
+    end,
+
     NewState = State#state{
-                 mst_adjs = [#edge{src = MstComputer, dst = MstPid, weight = Weight} | MstAdjsWithoutNeighbor],
-                 adjs = [#edge{src = Name, dst = NeighborName, weight = Weight} | AdjsWithoutNeighbor],
+                 mst_adjs = NewMstAdjs,
+                 adjs = NewAdjs,
                  mst_computer_pid = MstComputer
                 },
     % Reply to the neighbor with the pid of the MST process
+    dump_config(NewState),
     {reply, MstComputer, NewState};
 %% Request to communicate with node To, using Band
+handle_call(start_mst, _From, #state{name = Name,
+                                     adjs = Adjs,
+                                     mst_adjs = MstAdjs,
+                                     mst_computer_pid = MstComputer} = State) ->
+    % Get a new MST session ID from the Admin, this will be used to compute the MST
+    SessionID = get_new_session_id(),
+    % Notify neighbors and start to compute the MST
+    start_mst_computation(Name, Adjs, MstAdjs, MstComputer, SessionID),
+    {reply, ok, State};
 handle_call({request_to_communicate, To, Band} = Req, _From, #state{mst_computer_pid = MstComputer} = State) ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     MstInfo = get_mst_info(MstComputer),
@@ -231,8 +284,8 @@ handle_cast({awake, NameFrom, SessionID} = Req, #state{current_mst_session = Cur
     % Start to compute the MST using the new SessionID
     start_mst_computation(Name, ToAwake, MstAdjs, MstComputer, SessionID),
     {noreply, State#state{current_mst_session = SessionID}};
-handle_cast(Request, State) ->
-    ?LOG_DEBUG("(~p) got (cast) ~p, not managed", [State#state.name, Request]),
+handle_cast(_Request, State) ->
+    % ?LOG_DEBUG("(~p) got (cast) ~p, not managed", [State#state.name, Request]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -246,9 +299,11 @@ handle_cast(Request, State) ->
 	  {noreply, NewState :: term(), Timeout :: timeout()} |
 	  {noreply, NewState :: term(), hibernate} |
 	  {stop, Reason :: normal | term(), NewState :: term()}.
-handle_info({done, _SessionID} = Msg, State) ->
-    ?LOG_DEBUG("(~p) got ~p from my MST computer", [Msg]),
-    {noreply, State};
+handle_info({done, SessionID} = Msg, State) when SessionID >= State#state.current_mst_session ->
+    ?LOG_DEBUG("(~p) got ~p from my MST computer", [State#state.name, Msg]),
+    NewState = State#state{current_mst_session = SessionID,
+                           mst_computed = true},
+    {noreply, NewState};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -264,8 +319,8 @@ handle_info(_Info, State) ->
 -spec terminate(Reason :: normal | shutdown | {shutdown, term()} | term(),
 		State :: term()) -> any().
 terminate(_Reason, State) ->
-    Id = extract_id(State#state.name),
-    file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
+    % Id = extract_id(State#state.name),
+    % file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
     ok.
 
 %%--------------------------------------------------------------------
@@ -334,12 +389,16 @@ get_mst_worker(Name, Current, Supervisor) ->
 %% @private
 %% @doc Get a fresh SessionID to compute the MST
 %% @end
-get_new_session_id() ->
+get_new_session_id() -> get_new_session_id(3).
+get_new_session_id(Times) when Times > 0 ->
     admin ! {self(), new_id},
     receive
         {admin, Id} ->
         Id
-    end.
+    after 2000 ->
+        get_new_session_id(Times - 1)
+    end;
+get_new_session_id(0) -> throw(timeout).
 
 %% @private
 %% @doc Get the State of the MST process
@@ -366,3 +425,28 @@ dump_config(State) ->
 
 extract_id(Name) ->
     string:split(atom_to_list(Name), "node").
+
+
+validate_edges(Ref, Edges) ->
+    try
+        lists:all(fun(#edge{src = Src, dst = Dst, weight = Weight}) ->
+                      (is_atom(Src) or is_pid(Src)) andalso
+                      (is_atom(Dst) or is_pid(Dst)) andalso
+                      is_number(Weight) andalso Weight > 0 andalso
+                      Src == Ref andalso Dst /= Ref
+                  end , Edges),
+        ok
+    catch
+        _ -> throw(edges_not_valid)
+    end.
+
+
+get_neighbors_mst_pid(Adjs, Name, MstComputer) ->
+    lists:map(fun(#edge{dst = Dst, weight = Weight}) ->
+                      try
+                          DstPid = gen_server:call(Dst, {new_neighbor, Name, Weight, MstComputer}),
+                          {ok, #edge{src = MstComputer, dst = DstPid, weight = Weight}}
+                      catch
+                          exit:{timeout, _} -> {timed_out, Dst}
+                      end
+              end, Adjs).
