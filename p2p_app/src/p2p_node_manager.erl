@@ -11,7 +11,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/0, spawn_node/2]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -21,6 +21,15 @@
 %%%===================================================================
 %%% API functions
 %%%===================================================================
+
+spawn_node(Name, Adjs) ->
+    NodeSupSpec = #{id => make_ref(),
+                    start => {'p2p_node_sup', start_link, [Name, Adjs]},
+                    restart => permanent,
+                    shutdown => 5000,
+                    type => supervisor,
+                    modules => ['p2p_node_sup']},
+    supervisor:start_child(p2p_node_manager, NodeSupSpec).
 
 %%--------------------------------------------------------------------
 %% @doc
