@@ -321,6 +321,7 @@ handle_info(_Info, State) ->
 terminate(_Reason, State) ->
     % Id = extract_id(State#state.name),
     % file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
+    exit(State#state.mst_computer_pid, kill),
     ok.
 
 %%--------------------------------------------------------------------

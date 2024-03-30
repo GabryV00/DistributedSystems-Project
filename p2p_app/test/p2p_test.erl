@@ -4,7 +4,7 @@
 -record(edge, {dst :: pid(), src :: pid(), weight :: non_neg_integer()}).
 
 p2p_test_() ->
-    [start_mst_test()].
+    [kill_node_while_computing_mst()].
 
 % start_mst_test() ->
 %     {ok, Ref} = p2p_sup:start_link(node1, []),
@@ -66,6 +66,7 @@ start_mst_test() ->
         Nodes = utils:init_network("./config_files/"),
         p2p_node:start_mst_computation(node1),
         p2p_node:start_mst_computation(node3),
+        p2p_node:start_mst_computation(node10),
         timer:sleep(5000),
         States = lists:map(fun p2p_node:get_state/1, Nodes),
         Info = [FinishedMst || {state, _Name, _Adjs, _MstAdjs, _Sup, _ConnSup, _SessionID, _Connections, _MstComputer, FinishedMst} <- States],
@@ -76,3 +77,18 @@ get_mst_worker_test() ->
     {ok, Sup} = p2p_node_sup:start_link(node1, []),
     {ok, Pid} = p2p_node_sup:start_mst_worker(Sup, node1),
     ?_assert(is_pid(Pid)).
+
+
+kill_node_while_computing_mst() ->
+    {timeout, 300,
+     fun() ->
+        p2p_node_manager:start_link(),
+        p2p_admin_sup:start_link(),
+        Nodes = utils:init_network("./config_files/"),
+        p2p_node:start_mst_computation(node1),
+        p2p_node:leave_network(node3),
+        timer:sleep(5000),
+        States = lists:map(fun p2p_node:get_state/1, lists:delete(node3, Nodes)),
+        Info = [FinishedMst || {state, _Name, _Adjs, _MstAdjs, _Sup, _ConnSup, _SessionID, _Connections, _MstComputer, FinishedMst} <- States],
+        ?assert(lists:all(fun(X) -> X == true end, Info))
+     end}.
