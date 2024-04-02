@@ -82,13 +82,32 @@ get_mst_worker_test() ->
 kill_node_while_computing_mst() ->
     {timeout, 300,
      fun() ->
-        p2p_node_manager:start_link(),
-        p2p_admin_sup:start_link(),
-        Nodes = utils:init_network("./config_files/"),
-        p2p_node:start_mst_computation(node1),
-        p2p_node:leave_network(node3),
-        timer:sleep(5000),
-        States = lists:map(fun p2p_node:get_state/1, lists:delete(node3, Nodes)),
-        Info = [FinishedMst || {state, _Name, _Adjs, _MstAdjs, _Sup, _ConnSup, _SessionID, _Connections, _MstComputer, FinishedMst} <- States],
-        ?assert(lists:all(fun(X) -> X == true end, Info))
+             Config = #{
+                        config => #{
+                                    file => "logs/log.txt",
+                                    % prevent flushing (delete)
+                                    flush_qlen => 100000,
+                                    % disable drop mode
+                                    drop_mode_qlen => 100000,
+                                    % disable burst detection
+                                    burst_limit_enable => false,
+                                    filesync_repeat_interval => 500
+                                   },
+                        level => debug,
+                        modes => [write],
+                        formatter => {logger_formatter, #{template => [pid, " ", msg, "\n"]}}
+                       },
+             logger:add_handler(to_file_handler, logger_std_h, Config),
+
+             p2p_node_manager:start_link(),
+             p2p_admin_sup:start_link(),
+             Nodes = utils:init_network("./config_files/"),
+             p2p_node:start_mst_computation(node1),
+             p2p_node:leave_network(node3),
+             p2p_node:leave_network(node4),
+             p2p_node:leave_network(node5),
+             timer:sleep(150000),
+             States = lists:map(fun p2p_node:get_state/1, lists:subtract(Nodes, [node3, node4, node5])),
+             Info = [FinishedMst || {state, _Name, _Adjs, _MstAdjs, _Sup, _ConnSup, _SessionID, _Connections, _MstComputer, FinishedMst} <- States],
+             ?assert(lists:all(fun(X) -> X == true end, Info))
      end}.

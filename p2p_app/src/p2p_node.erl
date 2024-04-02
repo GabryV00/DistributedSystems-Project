@@ -162,7 +162,7 @@ init([Name, Adjs, Supervisor]) ->
           mst_computer_pid = undefined
          },
 
-    dump_config(State),
+    % dump_config(State),
     {ok, State}.
 
 %%--------------------------------------------------------------------
@@ -200,7 +200,7 @@ handle_call({join, Adjs} = Req, _From, #state{name = Name, supervisor = Supervis
                  adjs = NewAdjs,
                  mst_computer_pid = MstComputer,
                  mst_adjs = MstAdjs},
-    dump_config(NewState),
+    % dump_config(NewState),
     {reply, ok, NewState};
 %% A new neighbor appeared and asks to join the network
 handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
@@ -230,7 +230,7 @@ handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
                  mst_computer_pid = MstComputer
                 },
     % Reply to the neighbor with the pid of the MST process
-    dump_config(NewState),
+    % dump_config(NewState),
     {reply, MstComputer, NewState};
 %% Request to communicate with node To, using Band
 handle_call(start_mst, _From, #state{name = Name,
@@ -241,11 +241,15 @@ handle_call(start_mst, _From, #state{name = Name,
     SessionID = get_new_session_id(),
     % Notify neighbors and start to compute the MST
     start_mst_computation(Name, Adjs, MstAdjs, MstComputer, SessionID),
-    {reply, ok, State};
-handle_call({request_to_communicate, To, Band} = Req, _From, #state{mst_computer_pid = MstComputer} = State) ->
+    {reply, ok, State#state{mst_computed = false}};
+handle_call({request_to_communicate, To, Band} = Req, _From, State) when State#state.mst_computed == true ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    MstComputer = State#state.mst_computer_pid,
     MstInfo = get_mst_info(MstComputer),
     {reply, MstInfo, State};
+handle_call({request_to_communicate, _, _} = Req, _From, State) ->
+    ?LOG_DEBUG("(~p) got (call) ~p but no info on MST", [State#state.name, Req]),
+    {reply, no_mst, State};
 handle_call(leave = Req, _From, State) ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     Reason = normal,
@@ -283,7 +287,7 @@ handle_cast({awake, NameFrom, SessionID} = Req, #state{current_mst_session = Cur
                            end , Adjs),
     % Start to compute the MST using the new SessionID
     start_mst_computation(Name, ToAwake, MstAdjs, MstComputer, SessionID),
-    {noreply, State#state{current_mst_session = SessionID}};
+    {noreply, State#state{current_mst_session = SessionID, mst_computed=false}};
 handle_cast(_Request, State) ->
     % ?LOG_DEBUG("(~p) got (cast) ~p, not managed", [State#state.name, Request]),
     {noreply, State}.
@@ -304,6 +308,28 @@ handle_info({done, SessionID} = Msg, State) when SessionID >= State#state.curren
     NewState = State#state{current_mst_session = SessionID,
                            mst_computed = true},
     {noreply, NewState};
+handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#state.current_mst_session ->
+    ?LOG_DEBUG("(~p) got ~p from my MST computer", [State#state.name, Msg]),
+    MstAdjs = State#state.mst_adjs,
+    Adjs = State#state.adjs,
+    MstEdgeToDelete = lists:keyfind(Who, 2, MstAdjs),
+
+    case lists:keyfind(MstEdgeToDelete, 1, lists:zip(MstAdjs, Adjs)) of
+        {_, EdgeToDelete} ->
+            NewAdjs = lists:delete(EdgeToDelete, Adjs),
+            NewMstAdjs = lists:delete(MstEdgeToDelete, MstAdjs);
+        false ->
+            NewAdjs = Adjs,
+            NewMstAdjs = MstAdjs
+    end,
+
+    NewSessionID = get_new_session_id(),
+    start_mst_computation(State#state.name, NewAdjs, NewMstAdjs, State#state.mst_computer_pid, NewSessionID),
+    NewState = State#state{adjs = NewAdjs,
+                           mst_adjs = NewMstAdjs,
+                           current_mst_session = NewSessionID,
+                           mst_computed = false},
+    {noreply, NewState};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -321,7 +347,11 @@ handle_info(_Info, State) ->
 terminate(_Reason, State) ->
     % Id = extract_id(State#state.name),
     % file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
-    exit(State#state.mst_computer_pid, kill),
+    try
+        exit(State#state.mst_computer_pid, kill)
+    catch
+        _ -> ok % Mst process is already dead...
+    end,
     ok.
 
 %%--------------------------------------------------------------------
@@ -365,6 +395,7 @@ format_status(_Opt, Status) ->
 start_mst_computation(Name, Adjs, MstAdjs, MstComputerPid, SessionID) ->
     lists:foreach(fun(#edge{dst = Dst}) ->
                           ?LOG_DEBUG("~p awakening node ~p", [Name, Dst]),
+                          timer:sleep(10), % introducing latency
                           gen_server:cast(Dst, {awake, Name, SessionID})
                   end,
                   Adjs),
