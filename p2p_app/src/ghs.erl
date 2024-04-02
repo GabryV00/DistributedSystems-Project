@@ -229,13 +229,6 @@ node_loop(Node, State, Component) ->
         {info, {From, get_state}} ->
             From ! {self(), [Node, State, Component]},
             node_loop(Node, State, Component);
-        {{_From, _Ref, {SessionID, _}}, _Annot} = Msg when SessionID > State#state.mst_session ->
-            ?LOG_DEBUG("(~p, ~p) got a message with SessionID=~p while mine is ~p", [State#state.name, State#state.mst_session,SessionID, State#state.mst_session]),
-            self() ! Msg, % re-send the message to be consumed later
-            node_start(State#state.supervisor, State#state.name, SessionID);
-        {{From, Ref, {SessionID, _}}, _Annot} when SessionID < State#state.mst_session ->
-            send_ack(self(), From, Ref),
-            node_loop(Node, State, Component);
         {SessionID, {change_adjs, Adjs}} when SessionID > State#state.mst_session ->
             ?assert(SessionID >= State#state.mst_session),
             ?LOG_DEBUG("(~p, ~p) got change_adjs, SessionID=~p, My SessionID=~p", [State#state.name, State#state.mst_session, SessionID, State#state.mst_session]),
@@ -249,14 +242,21 @@ node_loop(Node, State, Component) ->
                      mst_session = SessionID},
               #component{level = 0, core = self()}
              );
-        {{From, Ref, {_SessionID, {test, Source_Id, Source_Component}}}, _} = Msg when Component#component.level >= Source_Component#component.level ->
+        {{_From, _AckTo, _Ref, {SessionID, _}}, _Annot} = Msg when SessionID > State#state.mst_session ->
+            ?LOG_DEBUG("(~p, ~p) got a message with SessionID=~p while mine is ~p", [State#state.name, State#state.mst_session,SessionID, State#state.mst_session]),
+            self() ! Msg, % re-send the message to be consumed later
+            node_start(State#state.supervisor, State#state.name, SessionID);
+        {{From, AckTo, Ref, {SessionID, _}}, _Annot} when SessionID < State#state.mst_session ->
+            send_ack(self(), AckTo, Ref),
+            node_loop(Node, State, Component);
+        {{From, AckTo, Ref, {_SessionID, {test, Source_Id, Source_Component}}}, _} = Msg when Component#component.level >= Source_Component#component.level ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             ?LOG_DEBUG("(~p, ~p) test from ~w, ~w", [State#state.name, State#state.mst_session, Source_Id, Source_Component]),
             test(Node, State, Component, Source_Id, Source_Component);
-        {{From, Ref, {_SessionID, accept}}, _} = Msg ->
+        {{From, AckTo, Ref, {_SessionID, accept}}, _} = Msg ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             ?LOG_DEBUG("(~p, ~p) got accept", [State#state.name, State#state.mst_session]),
             ?assertEqual(
                 searching,
@@ -273,9 +273,9 @@ node_loop(Node, State, Component) ->
                 },
                 Component
             );
-        {{From, Ref, {_SessionID, reject}}, _} = Msg ->
+        {{From, AckTo, Ref, {_SessionID, reject}}, _} = Msg ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             ?LOG_DEBUG("(~p, ~p) got reject", [State#state.name, State#state.mst_session]),
             ?assertEqual(
                 searching,
@@ -294,9 +294,9 @@ node_loop(Node, State, Component) ->
                 State,
                 Component
             );
-        {{From, Ref, {_SessionID, {report, Candidate}}}, _} = Msg ->
+        {{From, AckTo, Ref, {_SessionID, {report, Candidate}}}, _} = Msg ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             ?LOG_DEBUG("(~p, ~p) got report, ~w", [State#state.name, State#state.mst_session, Candidate]),
             ?assertEqual(
                 searching,
@@ -312,9 +312,9 @@ node_loop(Node, State, Component) ->
                 },
                 Component
             );
-        {{From, Ref, {_SessionID, notify}}, _} = Msg ->
+        {{From, AckTo, Ref, {_SessionID, notify}}, _} = Msg ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             ?LOG_DEBUG("(~p, ~p) got notify", [State#state.name, State#state.mst_session]),
             ?assertEqual(
                 found,
@@ -322,16 +322,16 @@ node_loop(Node, State, Component) ->
                 io_lib:format("notify received in ~p phase", [State#state.phase])
             ),
             notify(Node, State, Component);
-        {{From, Ref, {_SessionID, {merge, Source_Id, Source_Level}}}, _} = Msg when Component#component.level > Source_Level ->
+        {{From, AckTo, Ref, {_SessionID, {merge, Source_Id, Source_Level}}}, _} = Msg when Component#component.level > Source_Level ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             ?LOG_DEBUG("(~p, ~p) merge (quick) from ~w, ~w", [State#state.name, State#state.mst_session, Source_Id, Source_Level]),
             merge(Node, State, Component, Source_Id, Source_Level);
-        {{From, Ref, {_SessionID, {merge, Source_Id, Source_Level}}}, _} = Msg when Component#component.level == Source_Level andalso
+        {{From, AckTo, Ref, {_SessionID, {merge, Source_Id, Source_Level}}}, _} = Msg when Component#component.level == Source_Level andalso
                                                          State#state.selected andalso
                                                          State#state.candidate#candidate.edge#edge.dst == Source_Id ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             ?LOG_DEBUG("(~p, ~p) merge from ~w, ~w", [State#state.name, State#state.mst_session, Source_Id, Source_Level]),
             ?assertEqual(
                 found,
@@ -339,9 +339,9 @@ node_loop(Node, State, Component) ->
                 io_lib:format("merge (slow) received in ~p phase", [State#state.phase])
             ),
             merge(Node, State, Component, Source_Id, Source_Level);
-        {{From, Ref, {_SessionID, {update, New_Component, Phase}}}, _} = Msg ->
+        {{From, AckTo, Ref, {_SessionID, {update, New_Component, Phase}}}, _} = Msg ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             ?LOG_DEBUG("(~p, ~p) got update, ~w ~w", [State#state.name, State#state.mst_session, New_Component, Phase]),
             ?assertEqual(
                 found,
@@ -349,13 +349,13 @@ node_loop(Node, State, Component) ->
                 io_lib:format("update received in ~p phase", [State#state.phase])
             ),
             update(Node, State#state{phase = Phase}, New_Component);
-        {{From, Ref, {_SessionID, broadcast}}, _} = Msg ->
+        {{From, AckTo, Ref, {_SessionID, broadcast}}, _} = Msg ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             broadcast(Node, State, Component);
-        {{From, Ref, {_SessionID, {convergecast, Source_Representative, Source_Sum, Minimax_Routing_Table}}}, _} = Msg ->
+        {{From, AckTo, Ref, {_SessionID, {convergecast, Source_Representative, Source_Sum, Minimax_Routing_Table}}}, _} = Msg ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             convergecast(
                 Node#node{
                     minimax_routing_table = maps:merge(
@@ -369,20 +369,21 @@ node_loop(Node, State, Component) ->
                 },
                 Component
             );
-        {{From, Ref, {_SessionID, {route, Dst, Dist}}}, _} = Msg when Dst == Node#node.id ->
+        {{From, AckTo, Ref, {_SessionID, {route, Dst, Dist}}}, _} = Msg when Dst == Node#node.id ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             ?LOG_DEBUG("(~p, ~p) got long distance ~p", [State#state.name, State#state.mst_session, Dist]),
             node_loop(Node, State, Component);
-        {{From, Ref, {_SessionID, {route, Dst, _}}}, _} = Msg ->
+        {{From, AckTo, Ref, {_SessionID, {route, Dst, _}}}, _} = Msg ->
             events:received_annotated_msg(Msg),
-            send_ack(self(), From, Ref),
+            send_ack(self(), AckTo, Ref),
             Next_Hop_Edge = maps:get(Dst, Node#node.minimax_routing_table, Node#node.parent),
             events:tick(),
             send_wait_ack(Next_Hop_Edge#edge.dst, Msg),
+            node_loop(Node, State, Component);
+        {{_, AckTo, Ref, {_, _}, _}} ->
+            send_ack(self(), AckTo, Ref),
             node_loop(Node, State, Component)
-        % Msg ->
-        %     ?LOG_DEBUG("Got ~p not managed", [Msg])
     end.
 
 
@@ -650,12 +651,13 @@ send(To, Msg) ->
 send_wait_ack(To, Msg) -> send_wait_ack(To, Msg, 5000).
 send_wait_ack(To, Msg, Timeout) ->
     Parent = self(),
-    Pid = spawn(fun() -> wait_acknowledgement(To, Msg, Parent, Timeout) end),
-    send(To, {Pid, make_ref(), Msg}).
+    Ref = make_ref(),
+    Pid = spawn(fun() -> wait_acknowledgement(To, Msg, Ref, Parent, Timeout) end),
+    send(To, {self(), Pid, Ref, Msg}).
 
 
 
-wait_acknowledgement(Destination, Msg, Parent, Timeout) ->
+wait_acknowledgement(Destination, Msg, Ref, Parent, Timeout) ->
     receive
         {Destination, Ref, ack} ->
             Parent ! {acknowledged, Destination}
