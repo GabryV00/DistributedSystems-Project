@@ -7,7 +7,7 @@
 -include_lib("kernel/include/logger.hrl").
 
 %% API
--export([start/0, start_link/1]).
+-export([start_link/1]).
 
 %% MACROS
 -define(LOG_FILENAME, "logs/ghs.txt").
@@ -44,100 +44,44 @@
 
 
 start_link(Name) ->
-    logger:set_module_level(?MODULE, debug),
+    logger:set_module_level(?MODULE, error),
     Pid = spawn_link(fun() -> node_start(Name, Name) end),
     {ok, Pid}.
-
-%% algorithm entry point (can be executed from shell)
-start() ->
-    asynch_write:init(?EVENTS_FILENAME, "[\n  ", ",\n  ", "\n]"),
-    events:init(?MODULE),
-    latency:init(),
-
-    Supervisor = self(),
-
-    % load graph, spawn a process for each node, and stores node-pid bijections
-    Graph = datagraph:load(?GRAPH_FILENAME),
-    Nodes = datagraph:get_list_of_nodes(Graph),
-    NodeToPid = lists:foldl(fun ({Num, V}, Acc) ->
-                                Pid = spawn(fun () -> node_start(Supervisor, "node" ++ integer_to_list(Num)) end),
-                                maps:put(V, Pid, Acc)
-                            end,
-                            maps:new(), lists:enumerate(Nodes)),
-    PidToNode = lists:foldl(fun (V, Acc) ->
-                                Pid = maps:get(V, NodeToPid),
-                                maps:put(Pid, V, Acc)
-                            end,
-                            maps:new(), Nodes),
-
-    % log the possible locations of events (locations are now process ids, converted from node ids)
-    % locations are annotated with positions and weights
-    lists:foreach(fun ({V, [X, Y]}) ->
-                      save_node(maps:get(V, NodeToPid), X, Y)
-                  end,
-                  datagraph:get_list_of_datanodes(Graph)),
-    lists:foreach(fun ({V1, V2, Weight}) ->
-                      save_link(maps:get(V1, NodeToPid), maps:get(V2, NodeToPid), Weight)
-                  end,
-                  datagraph:get_list_of_dataedges(Graph)),
-
-    % inform node processes about their neighbours, which then start executing the algorithm
-    lists:foreach(fun (V1) ->
-                      Pid = maps:get(V1, NodeToPid),
-                      Adjs = lists:map(fun ({V2, Weight}) ->
-                                           #edge{src = Pid, dst = maps:get(V2, NodeToPid), weight = Weight}
-                                       end,
-                                       datagraph:get_list_of_dataadjs(V1, Graph)),
-                      Pid ! {1, {change_adjs, Adjs}}
-                  end,
-                  Nodes),
-
-    % supervise node processes
-    supervise(length(maps:keys(PidToNode))),
-
-    latency:stop(),
-    events:stop(),
-    asynch_write:stop()
-
-
-
-    .
 
 
 
 %% RESERVED
 
+% supervise(N) ->
+%     supervise(N, []).
 
-supervise(N) ->
-    supervise(N, []).
+% supervise(N, Components) when N > 0 ->
+%     ?LOG_DEBUG("(supervisor) N = ~p", [N]),
+%     receive
+%         {component, C} ->
+%             supervise(N, [C | Components]);
+%         {done} ->
+%             supervise(N - 1, Components)
+%     end;
 
-supervise(N, Components) when N > 0 ->
-    ?LOG_DEBUG("(supervisor) N = ~p", [N]),
-    receive
-        {component, C} ->
-            supervise(N, [C | Components]);
-        {done} ->
-            supervise(N - 1, Components)
-    end;
-
-supervise(0, Components) ->
-    String = lists:foldl(
-        fun({Representative, Sum}, Acc) ->
-            case Acc of
-                "" -> Sep = "";
-                _ -> Sep = ", "
-            end,
-            lists:flatten([
-                Acc,
-                io_lib:format("~s[\"~s\", ~w]", [Sep, Representative, Sum])
-            ])
-        end,
-        "",
-        Components
-    ),
-    % datagraph:fwrite_partial_graph(standard_io, Graph)
-    % TO BE DONE: EXPORT SPANNING TREE
-    io:fwrite(standard_io, "\"components\": [~s]}", [String]).
+% supervise(0, Components) ->
+%     String = lists:foldl(
+%         fun({Representative, Sum}, Acc) ->
+%             case Acc of
+%                 "" -> Sep = "";
+%                 _ -> Sep = ", "
+%             end,
+%             lists:flatten([
+%                 Acc,
+%                 io_lib:format("~s[\"~s\", ~w]", [Sep, Representative, Sum])
+%             ])
+%         end,
+%         "",
+%         Components
+%     ),
+%     % datagraph:fwrite_partial_graph(standard_io, Graph)
+%     % TO BE DONE: EXPORT SPANNING TREE
+%     io:fwrite(standard_io, "\"components\": [~s]}", [String]).
 
 
 root_action(Node, #state{representative = none} = State, Component) ->
@@ -148,9 +92,9 @@ root_action(Node, State, _Component) ->
     State#state.supervisor ! {component, {State#state.representative, State#state.sum}}.
 
 
-done_action(Supervisor, State) ->
+done_action(Supervisor, State, Node) ->
     ?LOG_DEBUG("(~p, ~p) done to ~w", [State#state.name, State#state.mst_session, Supervisor]),
-    Supervisor ! {done, State#state.mst_session}.
+    Supervisor ! {done, {State#state.mst_session, Node#node.parent, Node#node.minimax_routing_table}}.
 
 unreachable_action(#state{supervisor = Supervisor} = State, Node, Component, To) ->
     ?LOG_DEBUG("(~p) sending {unreachable, ~p} to supervisor", [State#state.name, To]),
@@ -577,7 +521,7 @@ broadcast(Node, State, Component) ->
 % calculate minimax routing tables
 convergecast(#node{parent = none} = Node, State, Component) when State#state.replies == ?Expected_replies(Node) ->
     root_action(Node, State, Component),
-    done_action(State#state.supervisor, State),
+    done_action(State#state.supervisor, State, Node),
     node_loop(Node, State, Component);
 
 convergecast(Node, State, Component) when State#state.replies == ?Expected_replies(Node) ->
@@ -590,7 +534,7 @@ convergecast(Node, State, Component) when State#state.replies == ?Expected_repli
             )},
     events:tick(),
     send_wait_ack(Node#node.parent#edge.dst, {State#state.mst_session, Msg}),
-    done_action(State#state.supervisor, State),
+    done_action(State#state.supervisor, State, Node),
     node_loop(Node, State, Component);
 
 convergecast(Node, State, Component) ->
@@ -648,7 +592,7 @@ send(To, Msg) ->
     LatencySendFun = fun (To2, Msg2) -> latency:send(To2, Msg2, ?LATENCY) end,
     events:send(To, Msg, LatencySendFun).
 
-send_wait_ack(To, Msg) -> send_wait_ack(To, Msg, 5000).
+send_wait_ack(To, Msg) -> send_wait_ack(To, Msg, 30000).
 send_wait_ack(To, Msg, Timeout) ->
     Parent = self(),
     Ref = make_ref(),
@@ -662,7 +606,7 @@ wait_acknowledgement(Destination, Msg, Ref, Parent, Timeout) ->
         {Destination, Ref, ack} ->
             Parent ! {acknowledged, Destination}
         after Timeout ->
-            ?LOG_DEBUG("Didn't get ack for ~p", [Msg]),
+            % ?LOG_DEBUG("Didn't get ack for ~p", [Msg]),
             Parent ! {timeout, Destination}
     end.
 
