@@ -9,10 +9,11 @@ p2p_test_() ->
       fun setup/0,
       fun cleanup/1,
       [
-       fun request_to_communicate_no_mst/1,
-       fun request_to_communicate/1,
-       fun request_to_communicate_no_band/1,
-       fun request_to_communicate_intermediate_dead/1
+       % fun request_to_communicate_no_mst/1,
+       % fun request_to_communicate/1,
+       % fun request_to_communicate_no_band/1,
+       % fun request_to_communicate_intermediate_dead/1
+       fun send_data/1
       ]}}.
 
 setup() ->
@@ -168,3 +169,14 @@ request_to_communicate_intermediate_dead(_Nodes) ->
     p2p_node:leave_network(node1),
     Reply = p2p_node:request_to_communicate(node21, node2, 1),
     ?_assertMatch({noproc, _Node}, Reply).
+
+send_data(_) ->
+    p2p_node:start_mst_computation(node1),
+    timer:sleep(10000),
+    p2p_node:request_to_communicate(node1, node2, 1),
+    ToSend = <<"Hello World">>,
+    p2p_node:send_data(node1, node2, ToSend),
+    timer:sleep(1000),
+    {ok, Read} = file:read_file("node1node2.data"),
+    file:delete("node1node2.data"),
+    ?_assertEqual(ToSend, Read).

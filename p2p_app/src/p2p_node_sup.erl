@@ -37,7 +37,7 @@ start_connection_handler(SupRef) ->
     {_Id, ConnSup, _Type, _Modules} = lists:keyfind('p2p_conn_handler_sup', 1, supervisor:which_children(SupRef)),
     Spec = #{id => make_ref(),
 	       start => {p2p_conn_handler, start_link, []},
-	       restart => transient,
+	       restart => temporary,
 	       shutdown => 5000,
 	       type => worker,
 	       modules => [p2p_conn_handler]},

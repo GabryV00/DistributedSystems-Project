@@ -18,7 +18,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3, format_status/2, join_network/2, get_state/1,
          request_to_communicate/3, leave_network/1, close_connection/2,
-         init_node_from_file/1, start_mst_computation/1]).
+         init_node_from_file/1, start_mst_computation/1, send_data/3]).
 
 -define(CONFIG_DIR, "../src/init/config_files/").
 -define(SERVER, ?MODULE).
@@ -74,8 +74,8 @@ close_connection(From, To) ->
 % end_stream(To) ->
 %     gen_server:call(self(), {end_stream, To}).
 
-% send_data(From, To) ->
-%     todo.
+send_data(From, To, Data) ->
+    gen_server:call(From, {send_data, From, To, Data}).
 
 start_mst_computation(Ref) ->
     gen_server:call(Ref, start_mst).
@@ -262,15 +262,19 @@ handle_call({request_to_communicate, {Who, To, Band}} = Req, _From, State) when 
                                                conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid}},
                         {reply, {ok, ConnHandlerPid}, NewState};
                     Reply ->
+                        exit(ConnHandlerPid, normal),
                         {reply, Reply, State}
                 end
             catch
                 exit:{timeout, _} ->
+                    exit(ConnHandlerPid, normal),
                     {reply, {timeout, NextHop}, State};
                 exit:{noproc, _} ->
+                    exit(ConnHandlerPid, normal),
                     {reply, {noproc, NextHop}, State}
             end;
         false ->
+            exit(ConnHandlerPid, normal),
             {reply, {no_band, {NextHop, Weight}}, State}
     end;
 %% Request to communicate from destination node perspective
@@ -301,15 +305,19 @@ handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, Sta
                                                conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid}},
                         {reply, {ok, ConnHandlerPid}, NewState};
                     Reply ->
+                        exit(ConnHandlerPid, normal),
                         {reply, Reply, State}
                 end
             catch
                 exit:{timeout, _} ->
+                    exit(ConnHandlerPid, normal),
                     {reply, {timeout, NextHop}, State};
                 exit:{noproc, _} ->
+                    exit(ConnHandlerPid, normal),
                     {reply, {noproc, NextHop}, State}
             end;
         false ->
+            exit(ConnHandlerPid, normal),
             {reply, {no_band, {NextHop, Weight}}, State}
     end;
 %% Request to communicate when MST is not computed from node's perspective
@@ -321,6 +329,14 @@ handle_call(leave = Req, _From, State) ->
     Reason = normal,
     Reply = ok,
     {stop, Reason, Reply, State};
+handle_call({send_data, From, To, Data}, _, State) ->
+    case maps:find({From, To}, State#state.conn_handlers) of
+        {ok, ConnHandlerPid} ->
+            p2p_conn_handler:send_data(ConnHandlerPid, Data),
+            {reply, ok, State};
+        error ->
+            {reply, {no_connection, {From, To}}, State}
+    end;
 handle_call(Request, _From, State) ->
     ?LOG_DEBUG("(~p) got (call) ~p, not managed", [State#state.name, Request]),
     Reply = ok,
