@@ -34,7 +34,7 @@ start_mst_worker(SupRef, Name) ->
 
 
 start_connection_handler(SupRef) ->
-    ConnSup = start_connection_handler_sup(SupRef),
+    {ok, ConnSup} = start_connection_handler_sup(SupRef),
     Spec = #{id => make_ref(),
 	       start => {p2p_conn_handler, start_link, []},
 	       restart => transient,
@@ -104,7 +104,7 @@ start_connection_handler_sup(SupRef) ->
     % Try to start the connection handler supervisor
     case supervisor:start_child(SupRef, SupSpec) of
         {ok, ConnSup} ->
-            todo;
+            {ok, ConnSup};
         {error, already_started, ConnSup} ->
             todo;
         _ ->

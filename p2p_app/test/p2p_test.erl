@@ -4,7 +4,49 @@
 -record(edge, {dst :: pid(), src :: pid(), weight :: non_neg_integer()}).
 
 p2p_test_() ->
-    [kill_node_while_computing_mst()].
+    {"Main test generator",
+     {foreach,
+      fun setup/0,
+      fun cleanup/1,
+      [
+       fun request_to_communicate_no_mst/1,
+       fun request_to_communicate/1,
+       fun request_to_communicate_no_band/1
+      ]}}.
+
+setup() ->
+    Config = #{
+               config => #{
+                           file => "logs/log.txt",
+                           % prevent flushing (delete)
+                           flush_qlen => 100000,
+                           % disable drop mode
+                           drop_mode_qlen => 100000,
+                           % disable burst detection
+                           burst_limit_enable => false,
+                           filesync_repeat_interval => 500
+                          },
+               level => debug,
+               modes => [write],
+               formatter => {logger_formatter, #{template => [pid, " ", msg, "\n"]}}
+              },
+    logger:add_handler(to_file_handler, logger_std_h, Config),
+
+    p2p_node_manager:start_link(),
+    p2p_admin_sup:start_link(),
+    _Nodes = utils:init_network("./config_files/").
+
+cleanup(Nodes) ->
+    % AdminSup = whereis(p2p_admin_sup),
+    % NodeManager = whereis(p2p_node_manager),
+    % unlink(AdminSup),
+    % unlink(NodeManager),
+    % unregister(p2p_node_manager),
+    % unregister(p2p_admin_sup),
+    % exit(AdminSup, shutdown),
+    % exit(NodeManager, shutdown)
+    lists:foreach(fun(Node) -> unregister(Node) end, Nodes),
+    ok.
 
 % start_mst_test() ->
 %     {ok, Ref} = p2p_sup:start_link(node1, []),
@@ -79,35 +121,34 @@ get_mst_worker_test() ->
     ?_assert(is_pid(Pid)).
 
 
-kill_node_while_computing_mst() ->
+kill_node_while_computing_mst(Nodes) ->
     {timeout, 300,
      fun() ->
-             Config = #{
-                        config => #{
-                                    file => "logs/log.txt",
-                                    % prevent flushing (delete)
-                                    flush_qlen => 100000,
-                                    % disable drop mode
-                                    drop_mode_qlen => 100000,
-                                    % disable burst detection
-                                    burst_limit_enable => false,
-                                    filesync_repeat_interval => 500
-                                   },
-                        level => debug,
-                        modes => [write],
-                        formatter => {logger_formatter, #{template => [pid, " ", msg, "\n"]}}
-                       },
-             logger:add_handler(to_file_handler, logger_std_h, Config),
-
-             p2p_node_manager:start_link(),
-             p2p_admin_sup:start_link(),
-             Nodes = utils:init_network("./config_files/"),
              p2p_node:start_mst_computation(node1),
-             p2p_node:leave_network(node3),
-             p2p_node:leave_network(node4),
-             p2p_node:leave_network(node5),
-             timer:sleep(150000),
-             States = lists:map(fun p2p_node:get_state/1, lists:subtract(Nodes, [node3, node4, node5])),
+             % p2p_node:leave_network(node3),
+             % p2p_node:leave_network(node5),
+             % p2p_node:leave_network(node2),
+             timer:sleep(30000),
+             States = lists:map(fun p2p_node:get_state/1, lists:subtract(Nodes, [])),
              Info = [FinishedMst || {state, _Name, _Adjs, _MstAdjs, _Sup, _ConnSup, _SessionID, _Connections, _MstComputer, FinishedMst} <- States],
-             ?assert(lists:all(fun(X) -> X == true end, Info))
+             Sessions = [SessionID || {state, _Name, _Adjs, _MstAdjs, _Sup, _ConnSup, SessionID, _Connections, _MstComputer, _FinishedMst} <- States],
+             ?assert(lists:all(fun(X) -> X == computed end, Info)),
+             ?assert(lists:all(fun(X) -> X == hd(Sessions) end, Sessions))
      end}.
+
+
+request_to_communicate_no_mst(_Nodes) ->
+    Reply = p2p_node:request_to_communicate(node1, node2, 1),
+    ?_assertEqual(no_mst, Reply).
+
+request_to_communicate(_Nodes) ->
+    p2p_node:start_mst_computation(node1),
+    timer:sleep(5000),
+    Reply = p2p_node:request_to_communicate(node1, node2, 1),
+    ?_assertMatch({ok, _Pid}, Reply).
+
+request_to_communicate_no_band(_Nodes) ->
+    p2p_node:start_mst_computation(node1),
+    timer:sleep(5000),
+    Reply = p2p_node:request_to_communicate(node1, node2, 100000),
+    ?_assertEqual(no_band, Reply).
