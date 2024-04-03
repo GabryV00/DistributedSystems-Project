@@ -626,7 +626,7 @@ compare_edge(A_Edge, B_Edge) ->
         A_Edge#edge.weight,
         min(A_Edge#edge.src, A_Edge#edge.dst),
         max(A_Edge#edge.src, A_Edge#edge.dst)
-    } =<
+    } >=
         {
             B_Edge#edge.weight,
             min(B_Edge#edge.src, B_Edge#edge.dst),
