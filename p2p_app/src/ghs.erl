@@ -27,7 +27,7 @@
     undecided = [] :: [#edge{}],
     adjs = [] :: [#edge{}],
     minimax_routing_table = #{} :: #{pid() => #edge{}},
-    pid_to_name :: #{pid() => term()}
+    pid_to_name = #{} :: #{pid() => term()}
 }).
 -record(component, {core :: pid(), level = 0 :: non_neg_integer()}).
 -record(candidate, {source_id :: pid(), edge :: #edge{}}).

@@ -34,7 +34,7 @@ start_mst_worker(SupRef, Name) ->
 
 
 start_connection_handler(SupRef) ->
-    {ok, ConnSup} = start_connection_handler_sup(SupRef),
+    {_Id, ConnSup, _Type, _Modules} = lists:keyfind('p2p_conn_handler_sup', 1, supervisor:which_children(SupRef)),
     Spec = #{id => make_ref(),
 	       start => {p2p_conn_handler, start_link, []},
 	       restart => transient,
@@ -88,28 +88,18 @@ init([Name, Adjs]) ->
 	       type => worker,
 	       modules => [p2p_node]},
 
+    ConnSup = #{id => 'p2p_conn_handler_sup',
+               start => {p2p_conn_handler_sup, start_link, []},
+               restart => transient,
+               shutdown => 5000,
+               type => supervisor,
+               modules => [p2p_conn_handler_sup]},
 
-    {ok, {SupFlags, [Node]}}.
+
+
+    {ok, {SupFlags, [Node, ConnSup]}}.
 
 %%%===================================================================
 %%% Internal functions
-
-start_connection_handler_sup(SupRef) ->
-    SupSpec = #{id => 'p2p_conn_handler_sup',
-	       start => {p2p_conn_handler_sup, start_link, []},
-	       restart => transient,
-	       shutdown => 5000,
-	       type => supervisor,
-	       modules => [p2p_conn_handler_sup]},
-    % Try to start the connection handler supervisor
-    case supervisor:start_child(SupRef, SupSpec) of
-        {ok, ConnSup} ->
-            {ok, ConnSup};
-        {error, already_started, ConnSup} ->
-            todo;
-        _ ->
-            ok % TODO: error management
-    end.
-
 
 %%===================================================================

@@ -11,7 +11,8 @@ p2p_test_() ->
       [
        fun request_to_communicate_no_mst/1,
        fun request_to_communicate/1,
-       fun request_to_communicate_no_band/1
+       fun request_to_communicate_no_band/1,
+       fun request_to_communicate_intermediate_dead/1
       ]}}.
 
 setup() ->
@@ -45,7 +46,12 @@ cleanup(Nodes) ->
     % unregister(p2p_admin_sup),
     % exit(AdminSup, shutdown),
     % exit(NodeManager, shutdown)
-    lists:foreach(fun(Node) -> unregister(Node) end, Nodes),
+    lists:foreach(fun(Node) -> 
+                          case whereis(Node) of
+                              undefined -> ok;
+                              _Name -> unregister(Node)
+                          end
+                  end, Nodes),
     ok.
 
 % start_mst_test() ->
@@ -139,16 +145,26 @@ kill_node_while_computing_mst(Nodes) ->
 
 request_to_communicate_no_mst(_Nodes) ->
     Reply = p2p_node:request_to_communicate(node1, node2, 1),
-    ?_assertEqual(no_mst, Reply).
+    ?_assertMatch({no_mst, _Name}, Reply).
 
 request_to_communicate(_Nodes) ->
-    p2p_node:start_mst_computation(node1),
-    timer:sleep(5000),
-    Reply = p2p_node:request_to_communicate(node1, node2, 1),
+    p2p_node:join_network(node21, [{edge, node1, node21, 10}]),
+    p2p_node:start_mst_computation(node21),
+    timer:sleep(30000),
+    Reply = p2p_node:request_to_communicate(node21, node2, 1),
     ?_assertMatch({ok, _Pid}, Reply).
 
 request_to_communicate_no_band(_Nodes) ->
     p2p_node:start_mst_computation(node1),
     timer:sleep(5000),
     Reply = p2p_node:request_to_communicate(node1, node2, 100000),
-    ?_assertEqual(no_band, Reply).
+    ?_assertMatch({no_band, {_Hop, _Weight}}, Reply).
+
+
+request_to_communicate_intermediate_dead(_Nodes) ->
+    p2p_node:join_network(node21, [{edge, node1, node21, 10}]),
+    p2p_node:start_mst_computation(node21),
+    timer:sleep(30000),
+    p2p_node:leave_network(node1),
+    Reply = p2p_node:request_to_communicate(node21, node2, 1),
+    ?_assertMatch({noproc, _Node}, Reply).

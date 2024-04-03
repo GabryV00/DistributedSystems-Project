@@ -63,7 +63,7 @@ init_node_from_file(FileName) ->
     end.
 
 request_to_communicate(From, To, Band) ->
-    gen_server:call(From, {request_to_communicate, From, To, Band}).
+    gen_server:call(From, {request_to_communicate, {From, To, Band}}).
 
 close_connection(From, To) ->
     gen_server:call(From, {close_connection, To}).
@@ -245,7 +245,7 @@ handle_call(start_mst, _From, #state{name = Name,
     start_mst_computation(Name, Adjs, MstAdjs, MstComputer, SessionID),
     {reply, ok, State#state{mst_state = computing}};
 %% Request to communicate from source node perspective
-handle_call({request_to_communicate, Who, To, Band} = Req, _From, State) when State#state.mst_state == computed andalso Who == State#state.name ->
+handle_call({request_to_communicate, {Who, To, Band}} = Req, _From, State) when State#state.mst_state == computed andalso Who == State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     ConnHandlerPid = get_connection_handler(State#state.supervisor),
     #edge{dst = NextHop, weight = Weight} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
@@ -253,7 +253,7 @@ handle_call({request_to_communicate, Who, To, Band} = Req, _From, State) when St
         true ->
             try
                 Timeout = get_timeout(),
-                case gen_server:call(NextHop, {request_to_communicate, Who, To, Band, ConnHandlerPid}, Timeout) of
+                case gen_server:call(NextHop, {request_to_communicate, {Who, To, Band, ConnHandlerPid}}, Timeout) of
                     {ok, NextHopConnHandler} ->
                         p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, Who, To),
                         CurrentConnections = State#state.connections,
@@ -261,19 +261,20 @@ handle_call({request_to_communicate, Who, To, Band} = Req, _From, State) when St
                         NewState = State#state{connections = [{Who, To} | CurrentConnections],
                                                conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid}},
                         {reply, {ok, ConnHandlerPid}, NewState};
-                    no_band ->
-                        {reply, no_band, State};
-                    no_mst ->
-                        {reply, no_mst, State}
+                    Reply ->
+                        {reply, Reply, State}
                 end
             catch
-                exit:{timeout, _} -> todo
+                exit:{timeout, _} ->
+                    {reply, {timeout, NextHop}, State};
+                exit:{noproc, _} ->
+                    {reply, {noproc, NextHop}, State}
             end;
         false ->
-            {reply, no_band, State}
+            {reply, {no_band, {NextHop, Weight}}, State}
     end;
 %% Request to communicate from destination node perspective
-handle_call({request_to_communicate, Who, To, Band, LastHop} = Req, _From, State) when State#state.mst_state == computed andalso To == State#state.name ->
+handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To == State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     ConnHandlerPid = get_connection_handler(State#state.supervisor),
     p2p_conn_handler:talk_to(ConnHandlerPid, LastHop, Who, To),
@@ -283,7 +284,7 @@ handle_call({request_to_communicate, Who, To, Band, LastHop} = Req, _From, State
                            conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid}},
     {reply, {ok, ConnHandlerPid}, NewState};
 %% Request to communicate from intermediate node perspective
-handle_call({request_to_communicate, Who, To, Band, LastHop} = Req, _From, State) when State#state.mst_state == computed andalso To /= State#state.name ->
+handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To /= State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     ConnHandlerPid = get_connection_handler(State#state.supervisor),
     #edge{dst = NextHop, weight = Weight} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
@@ -291,7 +292,7 @@ handle_call({request_to_communicate, Who, To, Band, LastHop} = Req, _From, State
         true ->
             try
                 Timeout = get_timeout(),
-                case gen_server:call(NextHop, {request_to_communicate, Who, To, Band}, Timeout) of
+                case gen_server:call(NextHop, {request_to_communicate, {Who, To, Band, ConnHandlerPid}}, Timeout) of
                     {ok, NextHopConnHandler} ->
                         p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, LastHop, Who, To),
                         CurrentConnections = State#state.connections,
@@ -299,21 +300,22 @@ handle_call({request_to_communicate, Who, To, Band, LastHop} = Req, _From, State
                         NewState = State#state{connections = [{Who, To} | CurrentConnections],
                                                conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid}},
                         {reply, {ok, ConnHandlerPid}, NewState};
-                    no_band ->
-                        {reply, no_band, State};
-                    no_mst ->
-                        {reply, no_mst, State}
+                    Reply ->
+                        {reply, Reply, State}
                 end
             catch
-                exit:{timeout, _} -> todo
+                exit:{timeout, _} ->
+                    {reply, {timeout, NextHop}, State};
+                exit:{noproc, _} ->
+                    {reply, {noproc, NextHop}, State}
             end;
         false ->
-            {reply, no_band, State}
+            {reply, {no_band, {NextHop, Weight}}, State}
     end;
 %% Request to communicate when MST is not computed from node's perspective
-handle_call({request_to_communicate, _, _, _} = Req, _From, State) ->
+handle_call({request_to_communicate,  _} = Req, _From, State) when State#state.mst_state /= computed ->
     ?LOG_DEBUG("(~p) got (call) ~p but no info on MST", [State#state.name, Req]),
-    {reply, no_mst, State};
+    {reply, {no_mst, State#state.name}, State};
 handle_call(leave = Req, _From, State) ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     Reason = normal,
@@ -550,7 +552,8 @@ get_neighbors_mst_pid(Adjs, Name, MstComputer) ->
               end, Adjs).
 
 get_connection_handler(SupRef) ->
-    p2p_node_sup:start_connection_handler(SupRef).
+    {ok, ConnHandler} = p2p_node_sup:start_connection_handler(SupRef),
+    ConnHandler.
 
 get_timeout() ->
     admin ! {self(), timer},
