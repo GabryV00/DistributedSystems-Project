@@ -648,7 +648,12 @@ send(To, Msg) ->
     LatencySendFun = fun (To2, Msg2) -> latency:send(To2, Msg2, ?LATENCY) end,
     events:send(To, Msg, LatencySendFun).
 
-send_wait_ack(From, To, Msg) -> send_wait_ack(From, To, Msg, 30000).
+send_wait_ack(From, To, Msg) ->
+    admin ! {self(), timer},
+    receive
+        {admin, Timeout} -> ok
+    end,
+    send_wait_ack(From, To, Msg, Timeout).
 send_wait_ack(From, To, Msg, Timeout) ->
     Parent = self(),
     Ref = make_ref(),

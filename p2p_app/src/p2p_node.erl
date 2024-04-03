@@ -252,7 +252,8 @@ handle_call({request_to_communicate, Who, To, Band} = Req, _From, State) when St
     case Weight >= Band of
         true ->
             try
-                case gen_server:call(NextHop, {request_to_communicate, Who, To, Band, ConnHandlerPid}, 10000) of
+                Timeout = get_timeout(),
+                case gen_server:call(NextHop, {request_to_communicate, Who, To, Band, ConnHandlerPid}, Timeout) of
                     {ok, NextHopConnHandler} ->
                         p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, Who, To),
                         CurrentConnections = State#state.connections,
@@ -260,8 +261,10 @@ handle_call({request_to_communicate, Who, To, Band} = Req, _From, State) when St
                         NewState = State#state{connections = [{Who, To} | CurrentConnections],
                                                conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid}},
                         {reply, {ok, ConnHandlerPid}, NewState};
-                    _ ->
-                        todo
+                    no_band ->
+                        {reply, no_band, State};
+                    no_mst ->
+                        {reply, no_mst, State}
                 end
             catch
                 exit:{timeout, _} -> todo
@@ -287,7 +290,8 @@ handle_call({request_to_communicate, Who, To, Band, LastHop} = Req, _From, State
     case Weight >= Band of
         true ->
             try
-                case gen_server:call(NextHop, {request_to_communicate, Who, To, Band}, 10000) of
+                Timeout = get_timeout(),
+                case gen_server:call(NextHop, {request_to_communicate, Who, To, Band}, Timeout) of
                     {ok, NextHopConnHandler} ->
                         p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, LastHop, Who, To),
                         CurrentConnections = State#state.connections,
@@ -295,8 +299,10 @@ handle_call({request_to_communicate, Who, To, Band, LastHop} = Req, _From, State
                         NewState = State#state{connections = [{Who, To} | CurrentConnections],
                                                conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid}},
                         {reply, {ok, ConnHandlerPid}, NewState};
-                    _ ->
-                        todo
+                    no_band ->
+                        {reply, no_band, State};
+                    no_mst ->
+                        {reply, no_mst, State}
                 end
             catch
                 exit:{timeout, _} -> todo
@@ -545,3 +551,10 @@ get_neighbors_mst_pid(Adjs, Name, MstComputer) ->
 
 get_connection_handler(SupRef) ->
     p2p_node_sup:start_connection_handler(SupRef).
+
+get_timeout() ->
+    admin ! {self(), timer},
+    receive
+        {admin, Timeout} ->
+            Timeout
+    end.

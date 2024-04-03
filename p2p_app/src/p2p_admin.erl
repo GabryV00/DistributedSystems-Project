@@ -33,11 +33,25 @@ init(Supervisor) ->
     events:stop(),
     asynch_write:stop().
 
+
 loop(Counter) ->
     receive
-       {From, new_id} ->
-        From ! {admin, Counter},
-        loop(Counter+1);
+        {From, new_id} ->
+            From ! {admin, Counter},
+            loop(Counter+1);
+        {From, timer} ->
+            N = compute_timer_duration(get_peer_count()),
+            From ! {admin, N},
+            loop(Counter);
         _ ->
             badrequest
     end.
+
+get_peer_count() ->
+    proplists:get_value(active, supervisor:count_children(p2p_node_manager)).
+
+%% @doc Computes the timeout value to give to a peer based on network dimesion
+%% @param N The number of peers in the network
+%% @end
+compute_timer_duration(N) ->
+    N * 1000.
