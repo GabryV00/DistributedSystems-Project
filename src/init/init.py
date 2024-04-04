@@ -63,7 +63,7 @@ def checkOneForAll(numNodes):
             a_edges = json.load(f)["edges"]
         if a_edges == []:
             b = i
-            while b != i:
+            while b == i:
                 b = random.randint(1, numNodes)
             band = random.randint(5, 100)
             writeEdge(i, b, band)
