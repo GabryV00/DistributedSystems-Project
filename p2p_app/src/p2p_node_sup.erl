@@ -26,7 +26,7 @@
 start_mst_worker(SupRef, Name) ->
     Spec = #{id => 'mst_computer',
 	       start => {ghs, start_link, [Name]},
-	       restart => permanent,
+	       restart => transient,
 	       shutdown => 5000,
 	       type => worker,
 	       modules => [ghs]},
@@ -37,7 +37,7 @@ start_connection_handler(SupRef) ->
     ConnSup = start_connection_handler_sup(SupRef),
     Spec = #{id => make_ref(),
 	       start => {p2p_conn_handler, start_link, []},
-	       restart => permanent,
+	       restart => transient,
 	       shutdown => 5000,
 	       type => worker,
 	       modules => [p2p_conn_handler]},
@@ -83,7 +83,7 @@ init([Name, Adjs]) ->
 
     Node = #{id => 'p2p_node',
 	       start => {p2p_node, start_link, [[Name, Adjs, self()]]},
-	       restart => permanent,
+	       restart => transient,
 	       shutdown => 5000,
 	       type => worker,
 	       modules => [p2p_node]},
@@ -97,9 +97,9 @@ init([Name, Adjs]) ->
 start_connection_handler_sup(SupRef) ->
     SupSpec = #{id => 'p2p_conn_handler_sup',
 	       start => {p2p_conn_handler_sup, start_link, []},
-	       restart => permanent,
+	       restart => transient,
 	       shutdown => 5000,
-	       type => worker,
+	       type => supervisor,
 	       modules => [p2p_conn_handler_sup]},
     % Try to start the connection handler supervisor
     case supervisor:start_child(SupRef, SupSpec) of

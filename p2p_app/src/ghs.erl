@@ -10,7 +10,7 @@
 -export([main/1, start/0, start_link/1]).
 
 %% MACROS
--define(LOG_FILENAME, "logs/log.txt").
+-define(LOG_FILENAME, "logs/ghs.txt").
 -define(GRAPH_FILENAME, "json/graph.json").
 -define(EVENTS_FILENAME, "json/events.json").
 -define(LATENCY, 10).
@@ -42,15 +42,16 @@
 }).
 
 
-start_link(Name) ->
-    FakeSup = spawn(fun DoNothing() ->
-                            receive
-                              Msg ->
-                                    ?LOG_DEBUG("(fake supervisor) got ~p", [Msg]),
-                                    DoNothing()
-                            end
-                    end),
-    Pid = spawn_link(fun() -> node_start(FakeSup, Name) end),
+start_link(Name) -> 
+    % FakeSup = spawn(fun DoNothing() ->
+    %                         receive
+    %                           Msg ->
+    %                                 ?LOG_DEBUG("(fake supervisor) got ~p", [Msg]),
+    %                                 DoNothing()
+    %                         end
+    %                 end),
+    logger:set_module_level(?MODULE, debug),
+    Pid = spawn_link(fun() -> node_start(Name, Name) end),
     {ok, Pid}.
 
 %% escript entry point
@@ -197,7 +198,7 @@ root_action(Node, State, _Component) ->
 
 done_action(Supervisor, State) ->
     ?LOG_DEBUG("(~p, ~p) done to ~w", [State#state.name, State#state.mst_session, Supervisor]),
-    Supervisor ! {done}.
+    Supervisor ! {done, State#state.mst_session}.
 
 
 node_start(Supervisor, Name) ->
@@ -219,34 +220,34 @@ node_start(Supervisor, Name) ->
 % THE CHAIN OF CALLS COULD BE SIMPLIFIED
 node_loop(Node, State, Component) ->
     % update visualization (core node, parent link, selected children, rejected edges)
-    % Core = Component#component.core,
-    % case self() of
-    %     Core -> events:process_state({core, Component#component.level});
-    %     _ -> events:process_state({normal, 0})
-    % end,
-    % ParentLink = Node#node.parent,
-    % case ParentLink of
-    %     none -> ok;
-    %     _ ->
-    %         % events:link_state(ParentLink#edge.dst, ParentLink#edge.src, deleted), % maybe remove this
-    %         events:link_state(ParentLink#edge.src, ParentLink#edge.dst, accepted)
-    % end,
-    % lists:foreach(fun (Link) ->
-    %                   case Link of
-    %                       ParentLink -> ok;
-    %                       _ ->
-    %                           events:link_state(Link#edge.src, Link#edge.dst, deleted)
-    %                   end
-    %               end,
-    %               Node#node.children),
-    % lists:foreach(fun (Link) ->
-    %                   case Link of
-    %                       ParentLink -> ok;
-    %                       _ ->
-    %                           events:link_state(Link#edge.src, Link#edge.dst, rejected)
-    %                   end
-    %               end,
-    %               Node#node.rejected),
+    Core = Component#component.core,
+    case self() of
+        Core -> events:process_state({core, Component#component.level});
+        _ -> events:process_state({normal, 0})
+    end,
+    ParentLink = Node#node.parent,
+    case ParentLink of
+        none -> ok;
+        _ ->
+            % events:link_state(ParentLink#edge.dst, ParentLink#edge.src, deleted), % maybe remove this
+            events:link_state(ParentLink#edge.src, ParentLink#edge.dst, accepted)
+    end,
+    lists:foreach(fun (Link) ->
+                      case Link of
+                          ParentLink -> ok;
+                          _ ->
+                              events:link_state(Link#edge.src, Link#edge.dst, deleted)
+                      end
+                  end,
+                  Node#node.children),
+    lists:foreach(fun (Link) ->
+                      case Link of
+                          ParentLink -> ok;
+                          _ ->
+                              events:link_state(Link#edge.src, Link#edge.dst, rejected)
+                      end
+                  end,
+                  Node#node.rejected),
     events:tick(),
 
     % message consumption
