@@ -45,7 +45,7 @@
 
 
 start_link(Name) ->
-    logger:set_module_level(?MODULE, error),
+    logger:set_module_level(?MODULE, debug),
     Pid = spawn_link(fun() -> node_start(Name, Name) end),
     {ok, Pid}.
 
@@ -130,7 +130,6 @@ translate_map(Map, none, _) ->
 unreachable_action(#state{supervisor = Supervisor} = State, Node, Component, To) ->
     ?LOG_DEBUG("(~p) sending {unreachable, ~p} to supervisor", [State#state.name, To]),
     Supervisor ! {unreachable, State#state.mst_session, To},
-    % node_start(Supervisor, State#state.name),
     node_loop(Node, State, Component).
 
 node_start(Supervisor, Name) ->
@@ -217,172 +216,190 @@ node_loop(Node, State, Component) ->
                      mst_session = SessionID},
               #component{level = 0, core = self()}
              );
-        {{_NameFrom, _PidFrom, _AckTo, _Ref, {SessionID, _}}, _Annot} = Msg when SessionID > State#state.mst_session ->
-            ?LOG_DEBUG("(~p, ~p) got a message with SessionID=~p while mine is ~p", [State#state.name, State#state.mst_session,SessionID, State#state.mst_session]),
-            self() ! Msg, % re-send the message to be consumed later
-            node_start(State#state.supervisor, State#state.name, SessionID);
-        {{_NameFrom, _PidFrom, AckTo, Ref, {SessionID, _}}, _Annot} when SessionID < State#state.mst_session ->
-            send_ack(self(), AckTo, Ref),
-            node_loop(Node, State, Component);
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {test, Source_Id, Source_Component}}}, _} = Msg when Component#component.level >= Source_Component#component.level ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
-            ?LOG_DEBUG("(~p, ~p) test from ~w, ~w", [State#state.name, State#state.mst_session, Source_Id, Source_Component]),
-            test(NewNode, State, Component, Source_Id, Source_Component);
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, accept}}, _} = Msg ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
-            ?LOG_DEBUG("(~p, ~p) got accept", [State#state.name, State#state.mst_session]),
-            ?assertEqual(
-                searching,
-                State#state.phase,
-                io_lib:format("accept received in ~p phase", [State#state.phase])
-            ),
-            Candidate = #candidate{source_id = Node#node.id, edge = hd(Node#node.undecided)},
-            report(
-                NewNode,
-                State#state{
-                    replies = State#state.replies + 1,
-                    candidate =
-                        min(fun compare_candidate/2, State#state.candidate, Candidate)
-                },
-                Component
-            );
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, reject}}, _} = Msg ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            ?LOG_DEBUG("(~p, ~p) got reject", [State#state.name, State#state.mst_session]),
-            ?assertEqual(
-                searching,
-                State#state.phase,
-                lists:flatten(
-                    io_lib:format("reject received in ~p phase", [State#state.phase])
-                )
-            ),
-            ?assert(length(Node#node.undecided) > 0, io_lib:format("reject without undecided", [])),
-
-            search(
-                Node#node{
-                    undecided = tl(Node#node.undecided),
-                    rejected = [hd(Node#node.undecided) | Node#node.rejected],
-                    pid_to_name = PidToName#{PidFrom => NameFrom}
-                },
-                State,
-                Component
-            );
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {report, Candidate}}}, _} = Msg ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
-            ?LOG_DEBUG("(~p, ~p) got report, ~w", [State#state.name, State#state.mst_session, Candidate]),
-            ?assertEqual(
-                searching,
-                State#state.phase,
-                io_lib:format("report received in ~p phase", [State#state.phase])
-            ),
-            report(
-                NewNode,
-                State#state{
-                    replies = State#state.replies + 1,
-                    candidate =
-                        min(fun compare_candidate/2, State#state.candidate, Candidate)
-                },
-                Component
-            );
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, notify}}, _} = Msg ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
-            ?LOG_DEBUG("(~p, ~p) got notify", [State#state.name, State#state.mst_session]),
-            ?assertEqual(
-                found,
-                State#state.phase,
-                io_lib:format("notify received in ~p phase", [State#state.phase])
-            ),
-            notify(NewNode, State, Component);
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {merge, Source_Id, Source_Level}}}, _} = Msg when Component#component.level > Source_Level ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
-            ?LOG_DEBUG("(~p, ~p) merge (quick) from ~w, ~w", [State#state.name, State#state.mst_session, Source_Id, Source_Level]),
-            merge(NewNode, State, Component, Source_Id, Source_Level);
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {merge, Source_Id, Source_Level}}}, _} = Msg when Component#component.level == Source_Level andalso
-                                                         State#state.selected andalso
-                                                         State#state.candidate#candidate.edge#edge.dst == Source_Id ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
-            ?LOG_DEBUG("(~p, ~p) merge from ~w, ~w", [State#state.name, State#state.mst_session, Source_Id, Source_Level]),
-            ?assertEqual(
-                found,
-                State#state.phase,
-                io_lib:format("merge (slow) received in ~p phase", [State#state.phase])
-            ),
-            merge(NewNode, State, Component, Source_Id, Source_Level);
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {update, New_Component, Phase}}}, _} = Msg ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
-            ?LOG_DEBUG("(~p, ~p) got update, ~w ~w", [State#state.name, State#state.mst_session, New_Component, Phase]),
-            ?assertEqual(
-                found,
-                State#state.phase,
-                io_lib:format("update received in ~p phase", [State#state.phase])
-            ),
-            update(NewNode, State#state{phase = Phase}, New_Component);
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, broadcast}}, _} = Msg ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
-            broadcast(NewNode, State, Component);
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {convergecast, Source_Representative, Source_Sum, Minimax_Routing_Table, PidToNameFrom}}}, _} = Msg -> events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            NewPidToName = maps:merge((Node#node.pid_to_name)#{PidFrom => NameFrom}, PidToNameFrom),
-            convergecast(
-                Node#node{
-                    minimax_routing_table = maps:merge(
-                        Node#node.minimax_routing_table, Minimax_Routing_Table
-                    ),
-                    pid_to_name = NewPidToName
-                },
-                State#state{
-                    replies = State#state.replies + 1,
-                    representative = max(State#state.representative, Source_Representative),
-                    sum = State#state.sum + Source_Sum
-                },
-                Component
-            );
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {route, Dst, Dist}}}, _} = Msg when Dst == Node#node.id ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
-            ?LOG_DEBUG("(~p, ~p) got long distance ~p", [State#state.name, State#state.mst_session, Dist]),
-            node_loop(NewNode, State, Component);
-        {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {route, Dst, _}}}, _} = Msg ->
-            events:received_annotated_msg(Msg),
-            send_ack(self(), AckTo, Ref),
-            PidToName = Node#node.pid_to_name,
-            NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
-            Next_Hop_Edge = maps:get(Dst, Node#node.minimax_routing_table, Node#node.parent),
-            events:tick(),
-            send_wait_ack(State#state.name, Next_Hop_Edge#edge.dst, Msg),
-            node_loop(NewNode, State, Component);
-        {{_, AckTo, Ref, {_, _}, _}} ->
-            send_ack(self(), AckTo, Ref),
-            node_loop(Node, State, Component)
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {SessionID, _}}, _Annot} = Msg ->
+            handle_mst_message(Msg, Node, State, Component)
     end.
+
+handle_mst_message(Message, Node, State, Component) ->
+    {{_, From, _, _, {_, _}}, _} = Message,
+    case lists:keyfind(From, 2, Node#node.adjs) of
+        false ->
+            ?LOG_DEBUG("Got a message from ~p who is not my neighbor", [From]),
+            node_loop(Node, State, Component);
+        _ ->
+            case Message of
+                {{_NameFrom, _PidFrom, _AckTo, _Ref, {SessionID, _}}, _Annot} = Msg when SessionID > State#state.mst_session ->
+                    ?LOG_DEBUG("(~p, ~p) got a message with SessionID=~p while mine is ~p", [State#state.name, State#state.mst_session,SessionID, State#state.mst_session]),
+                    self() ! Msg, % re-send the message to be consumed later
+                    node_start(State#state.supervisor, State#state.name, SessionID);
+                {{_NameFrom, PidFrom, AckTo, Ref, {SessionID, _}}, _Annot} when SessionID < State#state.mst_session ->
+                    send_ack(self(), AckTo, Ref),
+                    node_loop(Node, State, Component);
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {test, Source_Id, Source_Component}}}, _} = Msg when Component#component.level >= Source_Component#component.level ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
+                    ?LOG_DEBUG("(~p, ~p) test from ~w, ~w", [State#state.name, State#state.mst_session, Source_Id, Source_Component]),
+                    test(NewNode, State, Component, Source_Id, Source_Component);
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, accept}}, _} = Msg ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
+                    ?LOG_DEBUG("(~p, ~p) got accept", [State#state.name, State#state.mst_session]),
+                    ?assertEqual(
+                       searching,
+                       State#state.phase,
+                       io_lib:format("accept received in ~p phase", [State#state.phase])
+                      ),
+                    Candidate = #candidate{source_id = Node#node.id, edge = hd(Node#node.undecided)},
+                    report(
+                      NewNode,
+                      State#state{
+                        replies = State#state.replies + 1,
+                        candidate =
+                        min(fun compare_candidate/2, State#state.candidate, Candidate)
+                       },
+                      Component
+                     );
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, reject}}, _} = Msg ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    ?LOG_DEBUG("(~p, ~p) got reject", [State#state.name, State#state.mst_session]),
+                    ?assertEqual(
+                       searching,
+                       State#state.phase,
+                       lists:flatten(
+                         io_lib:format("reject received in ~p phase", [State#state.phase])
+                        )
+                      ),
+                    ?assert(length(Node#node.undecided) > 0, io_lib:format("reject without undecided", [])),
+
+                    search(
+                      Node#node{
+                        undecided = tl(Node#node.undecided),
+                        rejected = [hd(Node#node.undecided) | Node#node.rejected],
+                        pid_to_name = PidToName#{PidFrom => NameFrom}
+                       },
+                      State,
+                      Component
+                     );
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {report, Candidate}}}, _} = Msg ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
+                    ?LOG_DEBUG("(~p, ~p) got report, ~w", [State#state.name, State#state.mst_session, Candidate]),
+                    ?assertEqual(
+                       searching,
+                       State#state.phase,
+                       io_lib:format("report received in ~p phase", [State#state.phase])
+                      ),
+                    report(
+                      NewNode,
+                      State#state{
+                        replies = State#state.replies + 1,
+                        candidate =
+                        min(fun compare_candidate/2, State#state.candidate, Candidate)
+                       },
+                      Component
+                     );
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, notify}}, _} = Msg ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
+                    ?LOG_DEBUG("(~p, ~p) got notify", [State#state.name, State#state.mst_session]),
+                    ?assertEqual(
+                       found,
+                       State#state.phase,
+                       io_lib:format("notify received in ~p phase", [State#state.phase])
+                      ),
+                    notify(NewNode, State, Component);
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {merge, Source_Id, Source_Level}}}, _} = Msg when Component#component.level > Source_Level ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
+                    ?LOG_DEBUG("(~p, ~p) merge (quick) from ~w, ~w", [State#state.name, State#state.mst_session, Source_Id, Source_Level]),
+                    merge(NewNode, State, Component, Source_Id, Source_Level);
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {merge, Source_Id, Source_Level}}}, _} = Msg when Component#component.level == Source_Level andalso
+                                                                                                                State#state.selected andalso
+                                                                                                                State#state.candidate#candidate.edge#edge.dst == Source_Id ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
+                    ?LOG_DEBUG("(~p, ~p) merge from ~w, ~w", [State#state.name, State#state.mst_session, Source_Id, Source_Level]),
+                    ?assertEqual(
+                       found,
+                       State#state.phase,
+                       io_lib:format("merge (slow) received in ~p phase", [State#state.phase])
+                      ),
+                    merge(NewNode, State, Component, Source_Id, Source_Level);
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {update, New_Component, Phase}}}, _} = Msg ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
+                    ?LOG_DEBUG("(~p, ~p) got update, ~w ~w", [State#state.name, State#state.mst_session, New_Component, Phase]),
+                    ?assertEqual(
+                       found,
+                       State#state.phase,
+                       io_lib:format("update received in ~p phase", [State#state.phase])
+                      ),
+                    update(NewNode, State#state{phase = Phase}, New_Component);
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, broadcast}}, _} = Msg ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
+                    broadcast(NewNode, State, Component);
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {convergecast, Source_Representative, Source_Sum, Minimax_Routing_Table, PidToNameFrom}}}, _} = Msg -> events:received_annotated_msg(Msg),
+                                                                                                                                                                     send_ack(self(), AckTo, Ref),
+                                                                                                                                                                     NewPidToName = maps:merge((Node#node.pid_to_name)#{PidFrom => NameFrom}, PidToNameFrom),
+                                                                                                                                                                     convergecast(
+                                                                                                                                                                       Node#node{
+                                                                                                                                                                         minimax_routing_table = maps:merge(
+                                                                                                                                                                                                   Node#node.minimax_routing_table, Minimax_Routing_Table
+                                                                                                                                                                                                  ),
+                                                                                                                                                                         pid_to_name = NewPidToName
+                                                                                                                                                                        },
+                                                                                                                                                                       State#state{
+                                                                                                                                                                         replies = State#state.replies + 1,
+                                                                                                                                                                         representative = max(State#state.representative, Source_Representative),
+                                                                                                                                                                         sum = State#state.sum + Source_Sum
+                                                                                                                                                                        },
+                                                                                                                                                                       Component
+                                                                                                                                                                      );
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {route, Dst, Dist}}}, _} = Msg when Dst == Node#node.id ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
+                    ?LOG_DEBUG("(~p, ~p) got long distance ~p", [State#state.name, State#state.mst_session, Dist]),
+                    node_loop(NewNode, State, Component);
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {route, Dst, _}}}, _} = Msg ->
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    PidToName = Node#node.pid_to_name,
+                    NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
+                    Next_Hop_Edge = maps:get(Dst, Node#node.minimax_routing_table, Node#node.parent),
+                    events:tick(),
+                    send_wait_ack(State#state.name, Next_Hop_Edge#edge.dst, Msg),
+                    node_loop(NewNode, State, Component);
+                % {{_, _, AckTo, Ref, {_, _}}, _} = Msg ->
+                %     ?LOG_ERROR("~p", [Msg]),
+                %     send_ack(self(), AckTo, Ref),
+                %     node_loop(Node, State, Component)
+                _ ->
+                    self() ! Message, % keep the message for later consumption
+                    node_loop(Node, State, Component)
+            end
+    end.
+
 
 
 test(Node, State, Component, Source_Id, #component{core = Source_Core}) ->
@@ -665,7 +682,8 @@ send_wait_ack(From, To, Msg, Timeout) ->
 wait_acknowledgement(Destination, Msg, Ref, Parent, Timeout) ->
     receive
         {Destination, Ref, ack} ->
-            Parent ! {acknowledged, Destination}
+            % Parent ! {acknowledged, Destination}
+            ok
         after Timeout ->
             % ?LOG_DEBUG("Didn't get ack for ~p", [Msg]),
             Parent ! {timeout, Destination}

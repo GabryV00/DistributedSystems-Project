@@ -243,7 +243,7 @@ handle_call(start_mst, _From, #state{name = Name,
     SessionID = get_new_session_id(),
     % Notify neighbors and start to compute the MST
     start_mst_computation(Name, Adjs, MstAdjs, MstComputer, SessionID),
-    {reply, ok, State#state{mst_state = computing}};
+    {reply, ok, State#state{current_mst_session = SessionID, mst_state = computing}};
 %% Request to communicate from source node perspective
 handle_call({request_to_communicate, {Who, To, Band}} = Req, _From, State) when State#state.mst_state == computed andalso Who == State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
@@ -477,13 +477,13 @@ format_status(_Opt, Status) ->
 %% @param SessionID Is the session of the MST
 %% @end
 start_mst_computation(Name, Adjs, MstAdjs, MstComputerPid, SessionID) ->
+    MstComputerPid ! {SessionID, {change_adjs, MstAdjs}},
     lists:foreach(fun(#edge{dst = Dst}) ->
                           ?LOG_DEBUG("~p awakening node ~p", [Name, Dst]),
                           timer:sleep(10), % introducing latency
                           gen_server:cast(Dst, {awake, Name, SessionID})
                   end,
-                  Adjs),
-    MstComputerPid ! {SessionID, {change_adjs, MstAdjs}}.
+                  Adjs).
 
 
 
