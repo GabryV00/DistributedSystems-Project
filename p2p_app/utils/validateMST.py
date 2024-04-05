@@ -97,4 +97,4 @@ if __name__ == "__main__":
     mst = calculate_maximum_spanning_tree(G)
     
     create_files(mst)
-    print(check_correctness(PATH_CENTR, PATH_DIST))
+    print(check_correctness(PATH_DIST, PATH_CENTR))
