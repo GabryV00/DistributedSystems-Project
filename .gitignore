@@ -5,3 +5,4 @@
 rebar.lock
 /src/webgui/static/**
 /src/webgui/__pycache__/**
+/p2p_app/utils/validate_files/**
