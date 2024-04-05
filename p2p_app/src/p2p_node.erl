@@ -371,12 +371,19 @@ handle_call({request_to_communicate,  _} = Req, _From, State) when State#state.m
     {reply, {no_mst, State#state.name}, State};
 handle_call({close_connection, To} = Req, _From, State) ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    Who = State#state.name,
+    CurrentConnections = State#state.connections,
+    CurrentConnHandlers = State#state.conn_handlers,
+    NewState = State#state{connections = CurrentConnections -- [{Who, To}],
+                           conn_handlers = maps:remove({Who, To},
+                                               maps:remove({To, Who}, CurrentConnHandlers))},
     try
-        exit(maps:get({State#state.name, To}, State#state.conn_handlers), normal)
+        exit(maps:get({State#state.name, To}, State#state.conn_handlers), normal),
+        #edge{dst = NextHop} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
+        gen_server:cast(NextHop, {close_connection, Who, To}),
+        {reply, ok, NewState}
     catch
-        error:_ -> ok
-    after
-        {reply, ok, State}
+        error:_ -> {reply, ok, NewState} % the process already terminated for some reason
     end;
 handle_call(leave = Req, _From, State) ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
@@ -424,6 +431,34 @@ handle_cast({awake, NameFrom, SessionID} = Req, #state{current_mst_session = Cur
     % Start to compute the MST using the new SessionID
     start_mst_computation(Name, ToAwake, MstAdjs, MstComputer, SessionID),
     {noreply, State#state{current_mst_session = SessionID, mst_state=computing}};
+handle_cast({close_connection, Who, To} = Req, State) when To /= State#state.name ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    CurrentConnections = State#state.connections,
+    CurrentConnHandlers = State#state.conn_handlers,
+    NewState = State#state{connections = CurrentConnections -- [{Who, To}],
+                           conn_handlers = maps:remove({Who, To},
+                                                       maps:remove({To, Who}, CurrentConnHandlers))},
+    try
+        exit(maps:get({Who, To}, State#state.conn_handlers), normal),
+        #edge{dst = NextHop} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
+        gen_server:cast(NextHop, {close_connection, Who, To}),
+        {noreply, NewState}
+    catch
+        error:_ -> {noreply, NewState} % the process already terminated for some reason
+    end;
+handle_cast({close_connection, Who, To} = Req, State) when To == State#state.name ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+        CurrentConnections = State#state.connections,
+        CurrentConnHandlers = State#state.conn_handlers,
+        NewState = State#state{connections = CurrentConnections -- [{Who, To}],
+                               conn_handlers = maps:remove({Who, To},
+                                                   maps:remove({To, Who}, CurrentConnHandlers))},
+    try
+        exit(maps:get({Who, To}, State#state.conn_handlers), normal),
+        {noreply, NewState}
+    catch
+        error:_ -> {noreply, NewState} % the process already terminated for some reason
+    end;
 handle_cast(_Request, State) ->
     % ?LOG_DEBUG("(~p) got (cast) ~p, not managed", [State#state.name, Request]),
     {noreply, State}.
