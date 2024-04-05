@@ -259,7 +259,7 @@ handle_call({request_to_communicate, {Who, To, Band}} = Req, _From, State) when 
                         CurrentConnections = State#state.connections,
                         CurrentConnHandlers = State#state.conn_handlers,
                         NewState = State#state{connections = [{Who, To} | CurrentConnections],
-                                               conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid}},
+                                               conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
                         {reply, {ok, ConnHandlerPid}, NewState};
                     Reply ->
                         exit(ConnHandlerPid, normal),
@@ -285,7 +285,7 @@ handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, Sta
     CurrentConnections = State#state.connections,
     CurrentConnHandlers = State#state.conn_handlers,
     NewState = State#state{connections = [{Who, To} | CurrentConnections],
-                           conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid}},
+                           conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
     {reply, {ok, ConnHandlerPid}, NewState};
 %% Request to communicate from intermediate node perspective
 handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To /= State#state.name ->
@@ -302,7 +302,7 @@ handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, Sta
                         CurrentConnections = State#state.connections,
                         CurrentConnHandlers = State#state.conn_handlers,
                         NewState = State#state{connections = [{Who, To} | CurrentConnections],
-                                               conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid}},
+                                               conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
                         {reply, {ok, ConnHandlerPid}, NewState};
                     Reply ->
                         exit(ConnHandlerPid, normal),
@@ -324,6 +324,15 @@ handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, Sta
 handle_call({request_to_communicate,  _} = Req, _From, State) when State#state.mst_state /= computed ->
     ?LOG_DEBUG("(~p) got (call) ~p but no info on MST", [State#state.name, Req]),
     {reply, {no_mst, State#state.name}, State};
+handle_call({close_connection, To} = Req, _From, State) ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    try
+        exit(maps:get({State#state.name, To}, State#state.conn_handlers), normal)
+    catch
+        error:_ -> ok
+    after
+        {reply, ok, State}
+    end;
 handle_call(leave = Req, _From, State) ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     Reason = normal,
@@ -432,7 +441,8 @@ terminate(_Reason, State) ->
     % Id = extract_id(State#state.name),
     % file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
     try
-        exit(State#state.mst_computer_pid, kill)
+        exit(State#state.mst_computer_pid, kill),
+        maps:foreach(fun(_ConnId, ConnHandler) -> exit(ConnHandler, kill) end, State#state.conn_handlers)
     catch
         error:_ -> ok % Mst process is already dead...
     end,

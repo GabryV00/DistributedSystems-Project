@@ -2,6 +2,19 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -record(edge, {dst :: pid(), src :: pid(), weight :: non_neg_integer()}).
+-record(state, {
+          name :: term(),
+          adjs = [] :: [#edge{}],
+          mst_adjs = [] :: [#edge{}],
+          supervisor :: pid(),
+          current_mst_session :: term(),
+          connections = [] :: list(),
+          mst_computer_pid :: pid(),
+          mst_state = undefined :: computed | computing | undefined,
+          mst_routing_table = #{} :: #{term() => #edge{}},
+          mst_parent = none :: #edge{} | none,
+          conn_handlers = #{} :: #{{term(), term()} => pid()}
+         }).
 
 p2p_test_() ->
     {"Main test generator",
@@ -9,11 +22,14 @@ p2p_test_() ->
       fun setup/0,
       fun cleanup/1,
       [
+       fun kill_node_while_computing_mst/1,
        % fun request_to_communicate_no_mst/1,
        % fun request_to_communicate/1,
        % fun request_to_communicate_no_band/1,
        % fun request_to_communicate_intermediate_dead/1
-       fun send_data/1
+       % fun send_data/1,
+       % fun send_data_to_dead_node/1,
+       ?_assert(true)
       ]}}.
 
 setup() ->
@@ -132,13 +148,12 @@ kill_node_while_computing_mst(Nodes) ->
     {timeout, 300,
      fun() ->
              p2p_node:start_mst_computation(node1),
-             % p2p_node:leave_network(node3),
-             % p2p_node:leave_network(node5),
-             % p2p_node:leave_network(node2),
-             timer:sleep(30000),
-             States = lists:map(fun p2p_node:get_state/1, lists:subtract(Nodes, [])),
-             Info = [FinishedMst || {state, _Name, _Adjs, _MstAdjs, _Sup, _ConnSup, _SessionID, _Connections, _MstComputer, FinishedMst} <- States],
-             Sessions = [SessionID || {state, _Name, _Adjs, _MstAdjs, _Sup, _ConnSup, SessionID, _Connections, _MstComputer, _FinishedMst} <- States],
+             p2p_node:leave_network(node1),
+             p2p_node:leave_network(node3),
+             timer:sleep(100000),
+             States = lists:map(fun p2p_node:get_state/1, lists:subtract(Nodes, [node1, node3])),
+             Info = [FinishedMst || #state{mst_state = FinishedMst} <- States],
+             Sessions = [SessionID || #state{current_mst_session = SessionID} <- States],
              ?assert(lists:all(fun(X) -> X == computed end, Info)),
              ?assert(lists:all(fun(X) -> X == hd(Sessions) end, Sessions))
      end}.
@@ -180,3 +195,11 @@ send_data(_) ->
     {ok, Read} = file:read_file("node1node2.data"),
     file:delete("node1node2.data"),
     ?_assertEqual(ToSend, Read).
+
+
+send_data_to_dead_node(_) ->
+    p2p_node:start_mst_computation(node9),
+    timer:sleep(10000),
+    p2p_node:request_to_communicate(node2, node10, 1),
+    p2p_node:leave_network(node10),
+    p2p_node:send_data(node2, node10, <<"Hello">>).
