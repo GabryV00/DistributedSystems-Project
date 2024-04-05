@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import shutil
 import argparse
 
 def create_json(numNodes):
@@ -8,6 +9,9 @@ def create_json(numNodes):
     Function that creates all the json files
     """
     if not("config_files" in os.listdir(".")):
+        os.mkdir("./config_files")
+    else:
+        shutil.rmtree("./config_files")
         os.mkdir("./config_files")
     
     for i in range(1, numNodes+1):
