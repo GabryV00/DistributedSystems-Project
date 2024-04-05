@@ -9,8 +9,20 @@ def calculate_maximum_spanning_tree(graph):
     #graph.remove_edges_from(graph.selfloop_edges())  # Remove self-loops (if any)
 
     # Compute the Maximum Spanning Tree (MST)
-    mst = nx.maximum_spanning_tree(graph)
-    return mst
+    mst_i = iter(nx.SpanningTreeIterator(graph, minimum=False)) # get spanning trees in decreasing ordersdf8
+    # mst = nx.maximum_spanning_tree(graph)
+    msts = [next(mst_i)]
+    max_cost = graph_cost(msts[0])
+    for mst in mst_i:
+        if graph_cost(mst) == max_cost:
+            msts.append(mst)
+        else:
+            break
+
+    return msts
+
+def graph_cost(G):
+    return sum([weight for (_, _, weight) in G.edges().data("weight")])
 
 def create_files(mst):
     if not("validate_files" in os.listdir(".")):
@@ -94,7 +106,12 @@ if __name__ == "__main__":
             G.add_weighted_edges_from([(int(f'{id_a}'), int(f'{n[0]}'), int(f'{n[1]}'))])
 
     # Calculate Maximum Spanning Tree
-    mst = calculate_maximum_spanning_tree(G)
-    
-    create_files(mst)
-    print(check_correctness(PATH_DIST, PATH_CENTR))
+    msts = calculate_maximum_spanning_tree(G)
+    print(f"checking {len(msts)} MSTs")
+    outcomes = []
+
+    for mst in msts:
+        create_files(mst)
+        outcomes.append(check_correctness(PATH_DIST, PATH_CENTR))
+
+    print(any(outcomes))
