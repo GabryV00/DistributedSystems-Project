@@ -18,7 +18,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3, format_status/2, join_network/2, get_state/1,
          request_to_communicate/3, leave_network/1, close_connection/2,
-         init_node_from_file/1, start_mst_computation/1]).
+         init_node_from_file/1, start_mst_computation/1, send_data/3]).
 
 -define(CONFIG_DIR, "../src/init/config_files/").
 -define(SERVER, ?MODULE).
@@ -31,11 +31,13 @@
           adjs = [] :: [#edge{}],
           mst_adjs = [] :: [#edge{}],
           supervisor :: pid(),
-          conn_supervisor :: pid(),
           current_mst_session :: term(),
           connections = [] :: list(),
           mst_computer_pid :: pid(),
-          mst_computed :: boolean()
+          mst_state = undefined :: computed | computing | undefined,
+          mst_routing_table = #{} :: #{term() => #edge{}},
+          mst_parent = none :: #edge{} | none,
+          conn_handlers = #{} :: #{{term(), term()} => pid()}
          }).
 
 %%%===================================================================
@@ -61,7 +63,7 @@ init_node_from_file(FileName) ->
     end.
 
 request_to_communicate(From, To, Band) ->
-    gen_server:call(From, {request_to_communicate, To, Band}).
+    gen_server:call(From, {request_to_communicate, {From, To, Band}}).
 
 close_connection(From, To) ->
     gen_server:call(From, {close_connection, To}).
@@ -72,8 +74,8 @@ close_connection(From, To) ->
 % end_stream(To) ->
 %     gen_server:call(self(), {end_stream, To}).
 
-% send_data(To) ->
-%     todo.
+send_data(From, To, Data) ->
+    gen_server:call(From, {send_data, From, To, Data}).
 
 start_mst_computation(Ref) ->
     gen_server:call(Ref, start_mst).
@@ -119,6 +121,7 @@ get_state(Ref) ->
 
 
 
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Starts the server
@@ -148,7 +151,7 @@ start_link([Name | _] = Args) ->
 	  ignore.
 init([Name, Adjs, Supervisor]) ->
     process_flag(trap_exit, true),
-    logger:set_module_level(?MODULE, error),
+    logger:set_module_level(?MODULE, debug),
 
     ?LOG_DEBUG("(~p) Starting node with adjs ~p", [Name, Adjs]),
 
@@ -158,11 +161,11 @@ init([Name, Adjs, Supervisor]) ->
           mst_adjs = [],
           supervisor = Supervisor,
           current_mst_session = 0,
-          mst_computed = false,
+          mst_state = undefined,
           mst_computer_pid = undefined
          },
 
-    dump_config(State),
+    % dump_config(State),
     {ok, State}.
 
 %%--------------------------------------------------------------------
@@ -200,7 +203,7 @@ handle_call({join, Adjs} = Req, _From, #state{name = Name, supervisor = Supervis
                  adjs = NewAdjs,
                  mst_computer_pid = MstComputer,
                  mst_adjs = MstAdjs},
-    dump_config(NewState),
+    % dump_config(NewState),
     {reply, ok, NewState};
 %% A new neighbor appeared and asks to join the network
 handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
@@ -230,9 +233,8 @@ handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
                  mst_computer_pid = MstComputer
                 },
     % Reply to the neighbor with the pid of the MST process
-    dump_config(NewState),
+    % dump_config(NewState),
     {reply, MstComputer, NewState};
-%% Request to communicate with node To, using Band
 handle_call(start_mst, _From, #state{name = Name,
                                      adjs = Adjs,
                                      mst_adjs = MstAdjs,
@@ -241,16 +243,109 @@ handle_call(start_mst, _From, #state{name = Name,
     SessionID = get_new_session_id(),
     % Notify neighbors and start to compute the MST
     start_mst_computation(Name, Adjs, MstAdjs, MstComputer, SessionID),
-    {reply, ok, State};
-handle_call({request_to_communicate, To, Band} = Req, _From, #state{mst_computer_pid = MstComputer} = State) ->
+    {reply, ok, State#state{current_mst_session = SessionID, mst_state = computing}};
+%% Request to communicate from source node perspective
+handle_call({request_to_communicate, {Who, To, Band}} = Req, _From, State) when State#state.mst_state == computed andalso Who == State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
-    MstInfo = get_mst_info(MstComputer),
-    {reply, MstInfo, State};
+    ConnHandlerPid = get_connection_handler(State#state.supervisor),
+    #edge{dst = NextHop, weight = Weight} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
+    case Weight >= Band of
+        true ->
+            try
+                Timeout = get_timeout(),
+                case gen_server:call(NextHop, {request_to_communicate, {Who, To, Band, ConnHandlerPid}}, Timeout) of
+                    {ok, NextHopConnHandler} ->
+                        p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, Who, To),
+                        CurrentConnections = State#state.connections,
+                        CurrentConnHandlers = State#state.conn_handlers,
+                        NewState = State#state{connections = [{Who, To} | CurrentConnections],
+                                               conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
+                        {reply, {ok, ConnHandlerPid}, NewState};
+                    Reply ->
+                        exit(ConnHandlerPid, normal),
+                        {reply, Reply, State}
+                end
+            catch
+                exit:{timeout, _} ->
+                    exit(ConnHandlerPid, normal),
+                    {reply, {timeout, NextHop}, State};
+                exit:{noproc, _} ->
+                    exit(ConnHandlerPid, normal),
+                    {reply, {noproc, NextHop}, State}
+            end;
+        false ->
+            exit(ConnHandlerPid, normal),
+            {reply, {no_band, {NextHop, Weight}}, State}
+    end;
+%% Request to communicate from destination node perspective
+handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To == State#state.name ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    ConnHandlerPid = get_connection_handler(State#state.supervisor),
+    p2p_conn_handler:talk_to(ConnHandlerPid, LastHop, Who, To),
+    CurrentConnections = State#state.connections,
+    CurrentConnHandlers = State#state.conn_handlers,
+    NewState = State#state{connections = [{Who, To} | CurrentConnections],
+                           conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
+    {reply, {ok, ConnHandlerPid}, NewState};
+%% Request to communicate from intermediate node perspective
+handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To /= State#state.name ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    ConnHandlerPid = get_connection_handler(State#state.supervisor),
+    #edge{dst = NextHop, weight = Weight} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
+    case Weight >= Band of
+        true ->
+            try
+                Timeout = get_timeout(),
+                case gen_server:call(NextHop, {request_to_communicate, {Who, To, Band, ConnHandlerPid}}, Timeout) of
+                    {ok, NextHopConnHandler} ->
+                        p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, LastHop, Who, To),
+                        CurrentConnections = State#state.connections,
+                        CurrentConnHandlers = State#state.conn_handlers,
+                        NewState = State#state{connections = [{Who, To} | CurrentConnections],
+                                               conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
+                        {reply, {ok, ConnHandlerPid}, NewState};
+                    Reply ->
+                        exit(ConnHandlerPid, normal),
+                        {reply, Reply, State}
+                end
+            catch
+                exit:{timeout, _} ->
+                    exit(ConnHandlerPid, normal),
+                    {reply, {timeout, NextHop}, State};
+                exit:{noproc, _} ->
+                    exit(ConnHandlerPid, normal),
+                    {reply, {noproc, NextHop}, State}
+            end;
+        false ->
+            exit(ConnHandlerPid, normal),
+            {reply, {no_band, {NextHop, Weight}}, State}
+    end;
+%% Request to communicate when MST is not computed from node's perspective
+handle_call({request_to_communicate,  _} = Req, _From, State) when State#state.mst_state /= computed ->
+    ?LOG_DEBUG("(~p) got (call) ~p but no info on MST", [State#state.name, Req]),
+    {reply, {no_mst, State#state.name}, State};
+handle_call({close_connection, To} = Req, _From, State) ->
+    ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    try
+        exit(maps:get({State#state.name, To}, State#state.conn_handlers), normal)
+    catch
+        error:_ -> ok
+    after
+        {reply, ok, State}
+    end;
 handle_call(leave = Req, _From, State) ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     Reason = normal,
     Reply = ok,
     {stop, Reason, Reply, State};
+handle_call({send_data, From, To, Data}, _, State) ->
+    case maps:find({From, To}, State#state.conn_handlers) of
+        {ok, ConnHandlerPid} ->
+            p2p_conn_handler:send_data(ConnHandlerPid, Data),
+            {reply, ok, State};
+        error ->
+            {reply, {no_connection, {From, To}}, State}
+    end;
 handle_call(Request, _From, State) ->
     ?LOG_DEBUG("(~p) got (call) ~p, not managed", [State#state.name, Request]),
     Reply = ok,
@@ -283,7 +378,7 @@ handle_cast({awake, NameFrom, SessionID} = Req, #state{current_mst_session = Cur
                            end , Adjs),
     % Start to compute the MST using the new SessionID
     start_mst_computation(Name, ToAwake, MstAdjs, MstComputer, SessionID),
-    {noreply, State#state{current_mst_session = SessionID}};
+    {noreply, State#state{current_mst_session = SessionID, mst_state=computing}};
 handle_cast(_Request, State) ->
     % ?LOG_DEBUG("(~p) got (cast) ~p, not managed", [State#state.name, Request]),
     {noreply, State}.
@@ -299,10 +394,34 @@ handle_cast(_Request, State) ->
 	  {noreply, NewState :: term(), Timeout :: timeout()} |
 	  {noreply, NewState :: term(), hibernate} |
 	  {stop, Reason :: normal | term(), NewState :: term()}.
-handle_info({done, SessionID} = Msg, State) when SessionID >= State#state.current_mst_session ->
+handle_info({done, {SessionID, MstParent, MstRoutingTable}} = Msg, State) when SessionID >= State#state.current_mst_session ->
     ?LOG_DEBUG("(~p) got ~p from my MST computer", [State#state.name, Msg]),
     NewState = State#state{current_mst_session = SessionID,
-                           mst_computed = true},
+                           mst_state = computed,
+                           mst_parent = MstParent,
+                           mst_routing_table = MstRoutingTable},
+    {noreply, NewState};
+handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#state.current_mst_session ->
+    ?LOG_DEBUG("(~p) got ~p from my MST computer", [State#state.name, Msg]),
+    MstAdjs = State#state.mst_adjs,
+    Adjs = State#state.adjs,
+    MstEdgeToDelete = lists:keyfind(Who, 2, MstAdjs),
+
+    case lists:keyfind(MstEdgeToDelete, 1, lists:zip(MstAdjs, Adjs)) of
+        {_, EdgeToDelete} ->
+            NewAdjs = lists:delete(EdgeToDelete, Adjs),
+            NewMstAdjs = lists:delete(MstEdgeToDelete, MstAdjs);
+        false ->
+            NewAdjs = Adjs,
+            NewMstAdjs = MstAdjs
+    end,
+
+    NewSessionID = get_new_session_id(),
+    start_mst_computation(State#state.name, NewAdjs, NewMstAdjs, State#state.mst_computer_pid, NewSessionID),
+    NewState = State#state{adjs = NewAdjs,
+                           mst_adjs = NewMstAdjs,
+                           current_mst_session = NewSessionID,
+                           mst_state = computing},
     {noreply, NewState};
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -321,7 +440,12 @@ handle_info(_Info, State) ->
 terminate(_Reason, State) ->
     % Id = extract_id(State#state.name),
     % file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
-    exit(State#state.mst_computer_pid, kill),
+    try
+        exit(State#state.mst_computer_pid, kill),
+        maps:foreach(fun(_ConnId, ConnHandler) -> exit(ConnHandler, kill) end, State#state.conn_handlers)
+    catch
+        error:_ -> ok % Mst process is already dead...
+    end,
     ok.
 
 %%--------------------------------------------------------------------
@@ -363,12 +487,13 @@ format_status(_Opt, Status) ->
 %% @param SessionID Is the session of the MST
 %% @end
 start_mst_computation(Name, Adjs, MstAdjs, MstComputerPid, SessionID) ->
+    MstComputerPid ! {SessionID, {change_adjs, MstAdjs}},
     lists:foreach(fun(#edge{dst = Dst}) ->
                           ?LOG_DEBUG("~p awakening node ~p", [Name, Dst]),
+                          timer:sleep(10), % introducing latency
                           gen_server:cast(Dst, {awake, Name, SessionID})
                   end,
-                  Adjs),
-    MstComputerPid ! {SessionID, {change_adjs, MstAdjs}}.
+                  Adjs).
 
 
 
@@ -451,3 +576,14 @@ get_neighbors_mst_pid(Adjs, Name, MstComputer) ->
                           exit:{timeout, _} -> {timed_out, Dst}
                       end
               end, Adjs).
+
+get_connection_handler(SupRef) ->
+    {ok, ConnHandler} = p2p_node_sup:start_connection_handler(SupRef),
+    ConnHandler.
+
+get_timeout() ->
+    admin ! {self(), timer},
+    receive
+        {admin, Timeout} ->
+            Timeout
+    end.
