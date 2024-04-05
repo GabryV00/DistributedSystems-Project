@@ -4,6 +4,8 @@
 -define(LOG_FILENAME, "logs/log.txt").
 -include_lib("kernel/include/logger.hrl").
 
+%% @doc Application entrypoint.
+%% @end
 main(Args) ->
     {ok, #{verbose := Verbose, init := InitDir}, _, _} =
         argparse:parse(Args, #{
@@ -57,7 +59,10 @@ main(Args) ->
     0.
 
 
-
+%% @doc Starts the main components of the application.
+%% The admin supervisor, which starts the TCP endpoint as well, and the node
+%% manager, which spawns all the peers and their side processes
+%% @end
 start() ->
     io:format("Starting Admin~n"),
     p2p_admin_sup:start_link(),
@@ -65,6 +70,8 @@ start() ->
     p2p_node_manager:start_link(),
     loop().
 
+%% @doc Same as start/0, but initializes the network from the config files in InitDir
+%% @end
 start(InitDir) ->
     ?LOG_DEBUG("Initializing network from ~p", [InitDir]),
     p2p_admin_sup:start_link(),

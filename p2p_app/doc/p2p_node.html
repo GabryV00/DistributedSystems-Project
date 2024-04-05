@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Module p2p_node</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module p2p_node</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>.
+<p>Copyright © (C) 2024,</p>
+
+<p><b>Behaviours:</b> <a href="gen_server.html"><code>gen_server</code></a>.</p>
+<p><b>Authors:</b> <a href="mailto:gianluca"><code>gianluca</code></a>.</p>
+
+<h2><a name="description">Description</a></h2>
+  
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#close_connection-2">close_connection/2</a></td><td>Closes the connection for both peers
+  This is performed asynchronously, so there is no guarantee that all the
+  nodes in the path are reached.</td></tr>
+<tr><td valign="top"><a href="#get_state-1">get_state/1</a></td><td>Inspects the state of the peer.</td></tr>
+<tr><td valign="top"><a href="#init_node_from_file-1">init_node_from_file/1</a></td><td>Extract node information (id, edges) from config file and start a node
+  by asking the supervisor.</td></tr>
+<tr><td valign="top"><a href="#join_network-2">join_network/2</a></td><td>Instructs the peer to join the network with Adjs as neighbors.</td></tr>
+<tr><td valign="top"><a href="#leave_network-1">leave_network/1</a></td><td>Makes the node Ref leave the network "gracefully"
+  Terminates also all the connection handlers and the MST computer of the peer.</td></tr>
+<tr><td valign="top"><a href="#request_to_communicate-3">request_to_communicate/3</a></td><td>Request to communicate from a peer to another with a specified bandwidth.</td></tr>
+<tr><td valign="top"><a href="#send_data-3">send_data/3</a></td><td>From sends some binary data to To
+  This is performed asynchronously, so there is no guarantee that all the
+  nodes in the path are reached.</td></tr>
+<tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>
+  Starts the server.</td></tr>
+<tr><td valign="top"><a href="#start_mst_computation-1">start_mst_computation/1</a></td><td>Makes the node Ref start the computation of the MST by notifying it's neighbors.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="close_connection-2">close_connection/2</a></h3>
+<div class="spec">
+<p><code>close_connection(From, To) -&gt; any()</code></p>
+<p> </p>
+</div><p>Closes the connection for both peers
+  This is performed asynchronously, so there is no guarantee that all the
+  nodes in the path are reached</p>
+
+<h3 class="function"><a name="get_state-1">get_state/1</a></h3>
+<div class="spec">
+<p><code>get_state(Ref) -&gt; any()</code></p>
+<p> </p>
+</div><p>Inspects the state of the peer</p>
+
+<h3 class="function"><a name="init_node_from_file-1">init_node_from_file/1</a></h3>
+<div class="spec">
+<p><code>init_node_from_file(FileName) -&gt; any()</code></p>
+<p> </p>
+</div><p>Extract node information (id, edges) from config file and start a node
+  by asking the supervisor</p>
+
+<h3 class="function"><a name="join_network-2">join_network/2</a></h3>
+<div class="spec">
+<p><code>join_network(Ref, Adjs) -&gt; any()</code></p>
+<p> </p>
+</div><p>Instructs the peer to join the network with Adjs as neighbors</p>
+
+<h3 class="function"><a name="leave_network-1">leave_network/1</a></h3>
+<div class="spec">
+<p><code>leave_network(Ref) -&gt; any()</code></p>
+<p> </p>
+</div><p>Makes the node Ref leave the network "gracefully"
+  Terminates also all the connection handlers and the MST computer of the peer</p>
+
+<h3 class="function"><a name="request_to_communicate-3">request_to_communicate/3</a></h3>
+<div class="spec">
+<p><code>request_to_communicate(From, To, Band) -&gt; any()</code></p>
+<p> </p>
+</div><p>Request to communicate from a peer to another with a specified bandwidth</p>
+
+<h3 class="function"><a name="send_data-3">send_data/3</a></h3>
+<div class="spec">
+<p><code>send_data(From, To, Data) -&gt; any()</code></p>
+<p> </p>
+</div><p>From sends some binary data to To
+  This is performed asynchronously, so there is no guarantee that all the
+  nodes in the path are reached. Requires a connection established with request_to_communicate/3</p>
+
+<h3 class="function"><a name="start_link-1">start_link/1</a></h3>
+<div class="spec">
+<p><code>start_link(Args::term()) -&gt; {ok, Pid::pid()} | {error, Error::{already_started, pid()}} | {error, Error::term()} | ignore</code><br></p>
+<p> </p>
+</div><p>
+  Starts the server</p>
+
+<h3 class="function"><a name="start_mst_computation-1">start_mst_computation/1</a></h3>
+<div class="spec">
+<p><code>start_mst_computation(Ref) -&gt; any()</code></p>
+<p> </p>
+</div><p>Makes the node Ref start the computation of the MST by notifying it's neighbors</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc</i></p>
+</body>
+</html>

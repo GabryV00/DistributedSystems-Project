@@ -1,16 +1,18 @@
 -module(p2p_admin).
 
--include_lib("kernel/include/logger.hrl").
-
--export([init/1, start_link/1, spawn_node/2]).
+-export([start_link/1, spawn_node/2]).
 
 -define(EVENTS_FILENAME, "json/events.json").
 
+%% @doc Spawns the admin process
+%% @end
 start_link(Supervisor) ->
     Pid = spawn_link(?MODULE, init, [Supervisor]),
     register(admin, Pid),
     {ok, Pid}.
 
+%% @doc Asks the node manager to spawn a new node with the given name and neighbors
+%% @end
 spawn_node(Name, Adjs) ->
     NodeSupSpec = #{id => make_ref(),
                     start => {'p2p_node_sup', start_link, [Name, Adjs]},
@@ -20,6 +22,9 @@ spawn_node(Name, Adjs) ->
                     modules => ['p2p_node_sup']},
     supervisor:start_child(p2p_node_manager, NodeSupSpec).
 
+%% @private
+%% @doc Admin node initialization
+%% @end
 init(Supervisor) ->
     logger:set_module_level(?MODULE, debug),
     asynch_write:init(?EVENTS_FILENAME, "[\n  ", ",\n  ", "\n]"),
@@ -34,6 +39,9 @@ init(Supervisor) ->
     asynch_write:stop().
 
 
+%% @private
+%% @doc Main admin logic, gives fresh MST sessions and timer based on # of peers in the network
+%% @end
 loop(Counter) ->
     receive
         {From, new_id} ->
@@ -47,6 +55,9 @@ loop(Counter) ->
             badrequest
     end.
 
+%% @private
+%% @doc Computes the total number of peers in the network
+%% @end
 get_peer_count() ->
     proplists:get_value(active, supervisor:count_children(p2p_node_manager)).
 

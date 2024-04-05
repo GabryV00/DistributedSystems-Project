@@ -23,6 +23,8 @@ build_edges(Src, Edges) when is_list(Edges)->
                       weight = Weight}
               end, Edges).
 
+%% @doc Initializes the network from the JSON config files in InitDir
+%% @end
 init_network(InitDir) ->
     {ok, Files} = file:list_dir(InitDir),
     CompletePaths = [InitDir ++ File || File <- Files],

@@ -81,7 +81,7 @@ process_data(Data) ->
                 Adjs = utils:build_edges(Id, maps:get(<<"edges">>, Command)),
                 p2p_admin:spawn_node(Id, []),
                 p2p_node:join_network(Id, Adjs),
-                _Reply = p2p_node:start_mst_computation(Id),
+                p2p_node:start_mst_computation(Id),
                 ?LOG_DEBUG("(tcp) ~p started with adjs ~p~n", [Id, Adjs]);
             % Peer removed from the network
             <<"rem_peer">> ->
@@ -93,7 +93,10 @@ process_data(Data) ->
                 From = utils:get_pid_from_id(maps:get(<<"idA">>, Command)),
                 To = utils:get_pid_from_id(maps:get(<<"idB">>, Command)),
                 _Reply = p2p_node:close_connection(From, To),
-                ?LOG_DEBUG("(tcp) Closed connection between ~p and ~p", [From, To])
+                ?LOG_DEBUG("(tcp) Closed connection between ~p and ~p", [From, To]);
+            <<"get_state">> ->
+                Node = utils:get_pid_from_id(maps:get(<<"id">>, Command)),
+                p2p_node:get_state(Node)
         end
     catch
         error:{badarg, _Stack} ->
@@ -103,12 +106,17 @@ process_data(Data) ->
     end.
 
 
+%% @private
+%% @doc Formats replies to be sent to the other endpoint in JSON format
+%% @end
 process_reply(Reply) ->
     case Reply of
         ok ->
-            jsone:encode(#{<<"outcome">> => "ok", <<"message">> => <<"">>});
+            jsone:encode(#{<<"outcome">> => "ACK", <<"message">> => <<"">>});
         {ok, Message} ->
-            jsone:encode(#{<<"outcome">> => "ok", <<"message">> => Message});
+            jsone:encode(#{<<"outcome">> => "ACK", <<"message">> => Message});
         {Error, Message} ->
-            jsone:encode(#{<<"outcome">> => "error", <<"message">> => {Error, Message}})
+            jsone:encode(#{<<"outcome">> => "error", <<"message">> => {Error, Message}});
+        Message ->
+            jsone:encode(#{<<"outcome">> => "ACK", <<"message">> => Message})
     end.

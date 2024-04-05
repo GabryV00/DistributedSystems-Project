@@ -23,21 +23,19 @@
 -define(CONFIG_DIR, "../src/init/config_files/").
 -define(SERVER, ?MODULE).
 
-% childspecs to be used with supervisor:start_child() to ask the supervisor to
-% start a new worker
 -record(edge, {dst :: pid(), src :: pid(), weight :: non_neg_integer()}).
 -record(state, {
-          name :: term(),
-          adjs = [] :: [#edge{}],
-          mst_adjs = [] :: [#edge{}],
-          supervisor :: pid(),
-          current_mst_session :: term(),
-          connections = [] :: list(),
-          mst_computer_pid :: pid(),
-          mst_state = undefined :: computed | computing | undefined,
-          mst_routing_table = #{} :: #{term() => #edge{}},
-          mst_parent = none :: #edge{} | none,
-          conn_handlers = #{} :: #{{term(), term()} => pid()}
+          name :: atom(),                                               % Name of the peer
+          adjs = [] :: [#edge{}],                                       % List of incident edges, with other node names
+          mst_adjs = [] :: [#edge{}],                                   % List of incident edges, pids of MST computers
+          supervisor :: pid(),                                          % Pid of supervisor process
+          current_mst_session :: non_neg_integer(),                     % Current session of stored MST
+          connections = [] :: list(),                                   % List of tuples {From, To} that represents ongoing connections
+          mst_computer_pid :: pid(),                                    % Pid of own MST computer
+          mst_state = undefined :: computed | computing | undefined,    % Current state of MST from peer's perspective
+          mst_routing_table = #{} :: #{atom() => #edge{}},              % MST routing table (map) in the form #{NodeName => Edge}
+          mst_parent = none :: #edge{} | none,                          % Parent of peer in MST
+          conn_handlers = #{} :: #{{term(), term()} => pid()}           % Connection handler pids for each connection. #{{From,To} => Pid}
          }).
 
 %%%===================================================================
@@ -47,6 +45,8 @@
 %% @doc Extract node information (id, edges) from config file and start a node
 %% by asking the supervisor
 %% @param FileName A JSON encoded file with the node's data
+%% @returns {Id, Edges}, where Id is the nodeId (atom) extracted from the file
+%% and Edeges is a list of #edge records
 %% @end
 init_node_from_file(FileName) ->
     try
@@ -62,9 +62,28 @@ init_node_from_file(FileName) ->
             ?LOG_ERROR("Error: ~p during init on file ~p", [Reason, FileName])
     end.
 
+%% @doc Request to communicate from a peer to another with a specified bandwidth
+%% @param From The peer who starts the communication request
+%% @param To The peer who receives the communication request
+%% @param Band the minimum band needed for the communication
+%% @returns {ok, ConnHandlerPid} if the request is successful
+%%          {timeout, NodeName} if NodeName on the path to `To` times out on the request
+%%          {noproc, NodeName} if NodeName doesn't exist on the path to `To`
+%%          {no_band, NodeName} if the connection to NodeName on the path doesn't provide enough band
+%% @end
 request_to_communicate(From, To, Band) ->
     gen_server:call(From, {request_to_communicate, {From, To, Band}}).
 
+%% @doc Closes the connection for both peers
+%% This is performed asynchronously, so there is no guarantee that all the
+%% nodes in the path are reached
+%% @param From The peer who starts the closing request
+%% @param To The peer who receives the closing request
+%% @returns ok if the request is successful
+%%          {timeout, From} if From didn't answer in time
+%%          {noproc, From} if From doesn't exist
+%%          {shutdown, From} if From has been shut down from it's supervisor
+%% @end
 close_connection(From, To) ->
     try
         gen_server:call(From, {close_connection, To})
@@ -79,12 +98,18 @@ close_connection(From, To) ->
             {shutdown, From}
     end.
 
-% start_stream(To) ->
-%     gen_server:call(self(), {start_stream, To}).
-
-% end_stream(To) ->
-%     gen_server:call(self(), {end_stream, To}).
-
+%% @doc From sends some binary data to To
+%% This is performed asynchronously, so there is no guarantee that all the
+%% nodes in the path are reached. Requires a connection established with request_to_communicate/3
+%% @param From The peer who sends the data
+%% @param To The peer who receives the data
+%% @param Data Binary data to be sent
+%% @returns ok if the request is successful
+%%          {no_connection, {From, To}} if there is no active connection between the peers
+%%          {timeout, From} if From didn't answer in time
+%%          {noproc, From} if From doesn't exist
+%%          {shutdown, From} if From has been shut down from it's supervisor
+%% @end
 send_data(From, To, Data) ->
     try
         gen_server:call(From, {send_data, From, To, Data})
@@ -99,6 +124,13 @@ send_data(From, To, Data) ->
             {shutdown, From}
     end.
 
+%% @doc Makes the node Ref start the computation of the MST by notifying it's neighbors
+%% @param Ref The peer (pid or atom) who should start the algorithm
+%% @returns ok if the request is successful
+%%          {timeout, Ref} if Ref didn't answer in time
+%%          {noproc, Ref} if Ref doesn't exist
+%%          {shutdown, Ref} if Ref has been shut down from it's supervisor
+%% @end
 start_mst_computation(Ref) ->
     try
         gen_server:call(Ref, start_mst, get_timeout())
@@ -113,6 +145,14 @@ start_mst_computation(Ref) ->
             {shutdown, Ref}
     end.
 
+%% @doc Makes the node Ref leave the network "gracefully"
+%% Terminates also all the connection handlers and the MST computer of the peer
+%% @param Ref The peer (pid or atom) who should leave the network
+%% @returns ok if the request is successful
+%%          {timeout, Ref} if Ref didn't answer in time
+%%          {noproc, Ref} if Ref doesn't exist
+%%          {shutdown, Ref} if Ref has been shut down from it's supervisor
+%% @end
 leave_network(Ref) ->
     try
         gen_server:call(Ref, leave)
@@ -125,7 +165,14 @@ leave_network(Ref) ->
             ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [Ref])
     end.
 
-
+%% @doc Instructs the peer to join the network with Adjs as neighbors
+%% @param Ref The peer (pid or atom) who should join the network
+%% @param Adjs List of #edge records with the other nodes' names
+%% @returns ok if the request is successful
+%%          {timeout, Ref} if Ref didn't answer in time
+%%          {noproc, Ref} if Ref doesn't exist
+%%          {shutdown, Ref} if Ref has been shut down from it's supervisor
+%% @end
 join_network(Ref, Adjs) when is_atom(Ref) ->
     try
         validate_edges(Ref, Adjs),
@@ -152,6 +199,14 @@ join_network(Ref, Adjs) when is_atom(Ref) ->
 join_network(_Ref, _) ->
     throw(name_not_valid).
 
+
+%% @doc Inspects the state of the peer
+%% @param Ref The peer (pid or atom) to inspect
+%% @returns #state record if the request is successful
+%%          {timeout, Ref} if Ref didn't answer in time
+%%          {noproc, Ref} if Ref doesn't exist
+%%          {shutdown, Ref} if Ref has been shut down from it's supervisor
+%% @end
 get_state(Ref) ->
     try
         gen_server:call(Ref, get_state)
@@ -163,8 +218,6 @@ get_state(Ref) ->
         exit:{shutdown, _Location} ->
             ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [Ref])
     end.
-
-
 
 
 %%--------------------------------------------------------------------

@@ -1,0 +1,5 @@
+%% encoding: UTF-8
+{application,p2p}.
+{modules,[asynch_write,datagraph,events,ghs,latency,p2p,p2p_admin,
+          p2p_admin_sup,p2p_conn_handler,p2p_conn_handler_sup,p2p_node,
+          p2p_node_manager,p2p_node_sup,p2p_tcp,utils,vectorclock]}.
