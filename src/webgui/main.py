@@ -31,6 +31,7 @@ def open_conn(id_peerA, id_peerB, band):
     data = s.recv(1024)
     s.close()
     
+    
     if b"ACK" in data:
         return True
     else:
