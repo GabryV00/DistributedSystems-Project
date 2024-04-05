@@ -196,7 +196,7 @@ start_link([Name | _] = Args) ->
 	  ignore.
 init([Name, Adjs, Supervisor]) ->
     process_flag(trap_exit, true),
-    logger:set_module_level(?MODULE, debug),
+    logger:set_module_level(?MODULE, error),
 
     ?LOG_DEBUG("(~p) Starting node with adjs ~p", [Name, Adjs]),
 
@@ -241,7 +241,7 @@ handle_call({join, Adjs} = Req, _From, #state{name = Name, supervisor = Supervis
     ?LOG_DEBUG("(~p) Mst Pid of neighbors ~p", [State#state.name, MstAdjsTemp]),
     MstAdjs = proplists:get_all_values(ok, MstAdjsTemp),
     ?LOG_DEBUG("(~p) Mst Pid of neighbors who answered ~p", [State#state.name, MstAdjs]),
-    Unreachable = proplists:get_all_values(timed_out, MstAdjsTemp),
+    Unreachable = proplists:get_all_values(timed_out, MstAdjsTemp) ++ proplists:get_all_values(noproc, MstAdjsTemp),
     % Update the neighbor list
     NewAdjs = lists:subtract(Adjs, Unreachable),
     NewState = State#state{
@@ -323,7 +323,7 @@ handle_call({request_to_communicate, {Who, To, Band}} = Req, _From, State) when 
             {reply, {no_band, {NextHop, Weight}}, State}
     end;
 %% Request to communicate from destination node perspective
-handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To == State#state.name ->
+handle_call({request_to_communicate, {Who, To, _Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To == State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     ConnHandlerPid = get_connection_handler(State#state.supervisor),
     p2p_conn_handler:talk_to(ConnHandlerPid, LastHop, Who, To),
@@ -485,8 +485,9 @@ handle_info(_Info, State) ->
 -spec terminate(Reason :: normal | shutdown | {shutdown, term()} | term(),
 		State :: term()) -> any().
 terminate(_Reason, State) ->
-    % Id = extract_id(State#state.name),
+    Id = extract_id(State#state.name),
     % file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
+    dump_termination(Id),
     try
         exit(State#state.mst_computer_pid, kill),
         maps:foreach(fun(_ConnId, ConnHandler) -> exit(ConnHandler, kill) end, State#state.conn_handlers)
@@ -584,6 +585,12 @@ get_mst_info(MstComputer) ->
             Info
     end.
 
+dump_termination(Id) ->
+    FileName = ?CONFIG_DIR ++ "node_" ++ Id ++ ".json",
+    {ok, Data} = file:read_file(FileName),
+    Json = jsone:decode(Data),
+    NewData = Json#{<<"state">> => <<"terminated">>},
+    file:write_file(FileName, jsone:encode(NewData)).
 
 dump_config(State) ->
     [_ , Id] = extract_id(State#state.name),
@@ -594,7 +601,7 @@ dump_config(State) ->
     case State#state.mst_parent of
         #edge{dst = Parent, weight = Weight} ->
             [_, ParentId] = extract_id(Parent),
-            ParentEdge = [list_to_integer(ParentId), Weight];
+            ParentEdge = [[list_to_integer(ParentId), Weight]];
         none ->
             ParentEdge = []
     end,
@@ -605,7 +612,7 @@ dump_config(State) ->
                               end,
                               maps:to_list(State#state.mst_routing_table)
                              )
-                    ++ [ParentEdge]
+                    ++ ParentEdge
                    ),
     Json = jsone:encode(#{<<"id">> => list_to_bitstring(Id),
                           <<"edges">> => Edges,
@@ -638,7 +645,8 @@ get_neighbors_mst_pid(Adjs, Name, MstComputer) ->
                           DstPid = gen_server:call(Dst, {new_neighbor, Name, Weight, MstComputer}),
                           {ok, #edge{src = MstComputer, dst = DstPid, weight = Weight}}
                       catch
-                          exit:{timeout, _} -> {timed_out, Dst}
+                          exit:{timeout, _} -> {timed_out, Dst};
+                          exit:{noproc, _} -> {noproc, Dst}
                       end
               end, Adjs).
 

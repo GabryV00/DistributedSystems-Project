@@ -25,16 +25,21 @@ loop(State) ->
     BackwardHop = State#state.backward_hop,
     receive
         {send, Data} ->
+            io:format("(~p) got send~n", [self()]),
             ForwardHop ! {forward, self(), Data};
         {forward, ForwardHop, Data} when BackwardHop == none -> % Data has arrived
+            io:format("(~p) received data ~p~n", [self(), Data]),
             {From, To} = State#state.conn_id,
             FileName = atom_to_list(From) ++ atom_to_list(To) ++ ".data",
             write_to_file(Data, FileName);
         {forward, BackwardHop, Data} ->
+            io:format("(~p) forwarding to forward-hop ~p~n", [self(), BackwardHop]),
             ForwardHop ! {forward, self(), Data};
         {forward, ForwardHop, Data} ->
+            io:format("(~p) forwarding to backward-hop ~p~n", [self(), BackwardHop]),
             BackwardHop ! {forward, self(), Data}
-    end.
+    end,
+    loop(State).
 
 talk_to(ConnHandlerPid, ForwardHop, From, To) ->
     ConnHandlerPid ! {change_config, ForwardHop, From, To}.
