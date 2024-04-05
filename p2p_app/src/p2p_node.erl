@@ -78,7 +78,7 @@ send_data(From, To, Data) ->
     gen_server:call(From, {send_data, From, To, Data}).
 
 start_mst_computation(Ref) ->
-    gen_server:call(Ref, start_mst).
+    gen_server:call(Ref, start_mst, get_timeout()).
 
 leave_network(Ref) ->
     try
@@ -400,6 +400,7 @@ handle_info({done, {SessionID, MstParent, MstRoutingTable}} = Msg, State) when S
                            mst_state = computed,
                            mst_parent = MstParent,
                            mst_routing_table = MstRoutingTable},
+    dump_config(NewState),
     {noreply, NewState};
 handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#state.current_mst_session ->
     ?LOG_DEBUG("(~p) got ~p from my MST computer", [State#state.name, Msg]),
@@ -422,6 +423,7 @@ handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#
                            mst_adjs = NewMstAdjs,
                            current_mst_session = NewSessionID,
                            mst_state = computing},
+    dump_config(NewState),
     {noreply, NewState};
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -544,7 +546,25 @@ dump_config(State) ->
                             [_, DstId] = extract_id(Dst),
                             [list_to_integer(DstId), Weight]
                       end, State#state.adjs),
-    Json = jsone:encode(#{<<"id">> => list_to_bitstring(Id), <<"edges">> => Edges}),
+    case State#state.mst_parent of
+        #edge{dst = Parent, weight = Weight} ->
+            [_, ParentId] = extract_id(Parent),
+            ParentEdge = [list_to_integer(ParentId), Weight];
+        none ->
+            ParentEdge = []
+    end,
+    Mst = lists:uniq(
+                    lists:map(fun({_Pid, #edge{dst = Dst, weight = Weight}}) ->
+                                      [_, DstId] = extract_id(Dst),
+                                      [list_to_integer(DstId), Weight]
+                              end,
+                              maps:to_list(State#state.mst_routing_table)
+                             )
+                    ++ [ParentEdge]
+                   ),
+    Json = jsone:encode(#{<<"id">> => list_to_bitstring(Id),
+                          <<"edges">> => Edges,
+                          <<"mst">> => Mst}),
 
     file:write_file(?CONFIG_DIR ++ "node_" ++ Id ++ ".json", Json).
 
