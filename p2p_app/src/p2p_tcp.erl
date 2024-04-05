@@ -46,8 +46,8 @@ handle_request(Socket, ConnNumber) ->
     case gen_tcp:recv(Socket, 0) of
         {ok, Data} ->
             % Process the received data
-            Response = <<"ACK">>,
-            process_data(Data),
+            Reply = process_data(Data),
+            Response = process_reply(Reply),
             % gen_tcp:close(Socket);
             gen_tcp:send(Socket, Response),
             handle_request(Socket, ConnNumber);
@@ -73,24 +73,24 @@ process_data(Data) ->
                 From = utils:get_pid_from_id(maps:get(<<"idA">>, Command)),
                 To = utils:get_pid_from_id(maps:get(<<"idB">>, Command)),
                 Band = maps:get(<<"band">>, Command), % number
-                p2p_node:request_to_communicate(From, To, Band),
+                _Reply = p2p_node:request_to_communicate(From, To, Band),
                 ?LOG_DEBUG("(tcp) ~p asked ~p to communicate with bandwidth ~p", [From, To, Band]);
             % New peer added to the network
             <<"new_peer">> ->
                 Id = utils:get_pid_from_id(maps:get(<<"id">>, Command)),
                 Adjs = utils:build_edges(Id, maps:get(<<"edges">>, Command)),
-                p2p_admin:spawn_node(Id, Adjs),
+                _Reply = p2p_admin:spawn_node(Id, Adjs),
                 ?LOG_DEBUG("(tcp) ~p started with adjs ~p~n", [Id, Adjs]);
             % Peer removed from the network
             <<"rem_peer">> ->
                 Id = utils:get_pid_from_id(maps:get(<<"id">>, Command)),
-                p2p_node:leave_network(Id),
+                _Reply = p2p_node:leave_network(Id),
                 ?LOG_DEBUG("(tcp) ~p left the network", [Id]);
             % Close the connection between two peers
             <<"close_conn">> ->
                 From = utils:get_pid_from_id(maps:get(<<"idA">>, Command)),
                 To = utils:get_pid_from_id(maps:get(<<"idB">>, Command)),
-                p2p_node:close_connection(From, To),
+                _Reply = p2p_node:close_connection(From, To),
                 ?LOG_DEBUG("(tcp) Closed connection between ~p and ~p", [From, To])
         end
     catch
@@ -100,3 +100,13 @@ process_data(Data) ->
             ?LOG_ERROR("(tcp) Error:~p while processing: ~p ~p", [Reason, Data, Stack])
     end.
 
+
+process_reply(Reply) ->
+    case Reply of
+        ok ->
+            jsone:encode(#{<<"outcome">> => "ok", <<"message">> => <<"">>});
+        {ok, Message} ->
+            jsone:encode(#{<<"outcome">> => "ok", <<"message">> => Message});
+        {Error, Message} ->
+            jsone:encode(#{<<"outcome">> => "error", <<"message">> => {Error, Message}})
+    end.
