@@ -13,7 +13,8 @@ def create_json(numNodes):
     for i in range(1, numNodes+1):
         dictionary = {
             "id" : i,
-            "edges" : []
+            "edges" : [],
+            "mst": []
         }
 
         with open(f'./config_files/node_{i}.json', "w") as f:

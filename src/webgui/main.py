@@ -86,12 +86,13 @@ def generate_graph(PATH):
     for f in nodes:
         id_a = f[5: len(f)-5]
         with open(f'{PATH}/{f}', "r") as fl:
-            edges = json.load(fl)["edges"]
-            #edges_mst = json.load(fl)["mst"]
+            node_data = json.load(fl)
+            edges = node_data["edges"]
+            edges_mst = node_data["mst"]
         for n in edges:
             g.edge(f'{id_a}', f'{n[0]}', label=f'{n[1]}', color='blue')
-        #for n in edges_mst:
-        #    g.edge(f'{id_a}', f'{n[0]}', label=f'{n[1]}', color='green')
+        for n in edges_mst:
+           g.edge(f'{id_a}', f'{n[0]}', label=f'{n[1]}', color='green', penwidth='1.5', dir='forward')
 
     g.render('./static/graph.gv').replace('\\', '/')
 
