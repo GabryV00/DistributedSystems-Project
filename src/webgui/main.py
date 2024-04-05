@@ -15,7 +15,9 @@ TCP_ADDR = "127.0.0.1"
 LOG_FILE_NAME = '../../p2p_app/logs/log.txt'
 
 def open_conn(id_peerA, id_peerB, band):
-
+    """
+    Function that send the request for opening a connection between PeerA and PeerB, with a specific bandwidth
+    """
     #Open the socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, PEER_PORT))
@@ -35,6 +37,9 @@ def open_conn(id_peerA, id_peerB, band):
         return False
 
 def close_conn(id_peerA, id_peerB):
+    """
+    Function that send the request for closing a connection between PeerA and PeerB, if already exists
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, PEER_PORT))
     dictionary = {
@@ -47,6 +52,9 @@ def close_conn(id_peerA, id_peerB):
     s.close()
 
 def send_new(id_peer, edges):
+    """
+    Function that send the request for adding a new peer with the given edges
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, ADMIN_PORT))
     dictionary = {
@@ -59,6 +67,9 @@ def send_new(id_peer, edges):
     s.close()
 
 def send_kill(id_peer):
+    """
+    Function that kills a specific Peer
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, ADMIN_PORT))
     dictionary = {
