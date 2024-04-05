@@ -15,7 +15,9 @@ TCP_ADDR = "127.0.0.1"
 LOG_FILE_NAME = '../../p2p_app/logs/log.txt'
 
 def open_conn(id_peerA, id_peerB, band):
-
+    """
+    Function that send the request for opening a connection between PeerA and PeerB, with a specific bandwidth
+    """
     #Open the socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, PEER_PORT))
@@ -29,12 +31,16 @@ def open_conn(id_peerA, id_peerB, band):
     data = s.recv(1024)
     s.close()
     
+    
     if b"ACK" in data:
         return True
     else:
         return False
 
 def close_conn(id_peerA, id_peerB):
+    """
+    Function that send the request for closing a connection between PeerA and PeerB, if already exists
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, PEER_PORT))
     dictionary = {
@@ -47,6 +53,9 @@ def close_conn(id_peerA, id_peerB):
     s.close()
 
 def send_new(id_peer, edges):
+    """
+    Function that send the request for adding a new peer with the given edges
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, ADMIN_PORT))
     dictionary = {
@@ -59,6 +68,9 @@ def send_new(id_peer, edges):
     s.close()
 
 def send_kill(id_peer):
+    """
+    Function that kills a specific Peer
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_ADDR, ADMIN_PORT))
     dictionary = {
@@ -107,6 +119,9 @@ def admin():
 
 @app.route('/add_node', methods=['POST'])
 def add_node():
+    """
+    Function that manages the creation of a new peer
+    """
     node_id = request.form['id']
     edges = request.form['edges']
     print(f'NodeID: {node_id}\nEdges:{edges}')
@@ -119,6 +134,9 @@ def add_node():
 
 @app.route('/remove_node', methods=['POST'])
 def remove_node():
+    """
+    Function that allows to remove a peer
+    """
     node_id = request.form['rid']
     print(f'NodeID to remove: {node_id}')
     
