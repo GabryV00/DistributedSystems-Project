@@ -117,6 +117,9 @@ def admin():
 
 @app.route('/add_node', methods=['POST'])
 def add_node():
+    """
+    Function that manages the creation of a new peer
+    """
     node_id = request.form['id']
     edges = request.form['edges']
     print(f'NodeID: {node_id}\nEdges:{edges}')
@@ -129,6 +132,9 @@ def add_node():
 
 @app.route('/remove_node', methods=['POST'])
 def remove_node():
+    """
+    Function that allows to remove a peer
+    """
     node_id = request.form['rid']
     print(f'NodeID to remove: {node_id}')
     
