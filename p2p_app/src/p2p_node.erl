@@ -66,7 +66,18 @@ request_to_communicate(From, To, Band) ->
     gen_server:call(From, {request_to_communicate, {From, To, Band}}).
 
 close_connection(From, To) ->
-    gen_server:call(From, {close_connection, To}).
+    try
+        gen_server:call(From, {close_connection, To})
+    catch
+        exit:{timeout, _Location} ->
+            ?LOG_ERROR("Request to join to ~p timed out"),
+            {timeout, From};
+        exit:{noproc, _Location} ->
+            {noproc, From};
+        exit:{shutdown, _Location} ->
+            ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [From]),
+            {shutdown, From}
+    end.
 
 % start_stream(To) ->
 %     gen_server:call(self(), {start_stream, To}).
@@ -75,10 +86,32 @@ close_connection(From, To) ->
 %     gen_server:call(self(), {end_stream, To}).
 
 send_data(From, To, Data) ->
-    gen_server:call(From, {send_data, From, To, Data}).
+    try
+        gen_server:call(From, {send_data, From, To, Data})
+    catch
+        exit:{timeout, _Location} ->
+            ?LOG_ERROR("Request to join to ~p timed out"),
+            {timeout, From};
+        exit:{noproc, _Location} ->
+            {noproc, From};
+        exit:{shutdown, _Location} ->
+            ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [From]),
+            {shutdown, From}
+    end.
 
 start_mst_computation(Ref) ->
-    gen_server:call(Ref, start_mst, get_timeout()).
+    try
+        gen_server:call(Ref, start_mst, get_timeout())
+    catch
+        exit:{timeout, _Location} ->
+            ?LOG_ERROR("Request to join to ~p timed out"),
+            {timeout, Ref};
+        exit:{noproc, _Location} ->
+            {noproc, Ref};
+        exit:{shutdown, _Location} ->
+            ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [Ref]),
+            {shutdown, Ref}
+    end.
 
 leave_network(Ref) ->
     try
@@ -103,21 +136,33 @@ join_network(Ref, Adjs) when is_atom(Ref) ->
         end
     catch
         throw:edges_not_valid ->
-            ?LOG_ERROR("Edges are not valid");
+            ?LOG_ERROR("Edges are not valid"),
+            {edges_not_valid, Adjs};
         exit:{timeout, _Location} ->
-            ?LOG_ERROR("Request to join to ~p timed out");
+            ?LOG_ERROR("Request to join to ~p timed out"),
+            {timeout, Ref};
         exit:{noproc, _Location} ->
             p2p_node_manager:spawn_node(Ref, Adjs),
             join_network(Ref, Adjs);
         exit:{shutdown, _Location} ->
-            ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [Ref])
+            ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [Ref]),
+            {shutdown, Ref}
     end;
 
 join_network(_Ref, _) ->
     throw(name_not_valid).
 
 get_state(Ref) ->
-    gen_server:call(Ref, get_state).
+    try
+        gen_server:call(Ref, get_state)
+    catch
+        exit:{timeout, _Location} ->
+            exit(Ref, shutdown);
+        exit:{noproc, _Location} ->
+            ok;
+        exit:{shutdown, _Location} ->
+            ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [Ref])
+    end.
 
 
 

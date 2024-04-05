@@ -79,7 +79,9 @@ process_data(Data) ->
             <<"new_peer">> ->
                 Id = utils:get_pid_from_id(maps:get(<<"id">>, Command)),
                 Adjs = utils:build_edges(Id, maps:get(<<"edges">>, Command)),
-                _Reply = p2p_admin:spawn_node(Id, Adjs),
+                p2p_admin:spawn_node(Id, []),
+                p2p_node:join_network(Id, Adjs),
+                _Reply = p2p_node:start_mst_computation(Id),
                 ?LOG_DEBUG("(tcp) ~p started with adjs ~p~n", [Id, Adjs]);
             % Peer removed from the network
             <<"rem_peer">> ->
