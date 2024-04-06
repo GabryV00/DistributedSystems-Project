@@ -19,7 +19,7 @@
 <h2><a name="description">Description</a></h2>
   
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#spawn_node-2">spawn_node/2</a></td><td></td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#spawn_node-2">spawn_node/2</a></td><td>Adds a child process for a new peer in the supervisor list.</td></tr>
 <tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td>
   Starts the supervisor.</td></tr>
 </table>
@@ -28,9 +28,11 @@
 
 <h3 class="function"><a name="spawn_node-2">spawn_node/2</a></h3>
 <div class="spec">
-<p><code>spawn_node(Name, Adjs) -&gt; any()</code></p>
-<p> </p>
-</div>
+<p><code>spawn_node(Name::pid(), Adjs::[#edge{}]) -&gt; {ok, Child::pid()}</code><br></p>
+<p><code>Name</code>: The name of the new peer<br>
+<code>Adjs</code>: The list of incident edges of the peer<br>
+</p>
+</div><p>Adds a child process for a new peer in the supervisor list.</p>
 
 <h3 class="function"><a name="start_link-0">start_link/0</a></h3>
 <div class="spec">

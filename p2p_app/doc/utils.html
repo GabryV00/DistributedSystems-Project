@@ -23,20 +23,24 @@
 
 <h3 class="function"><a name="build_edges-2">build_edges/2</a></h3>
 <div class="spec">
-<p><code>build_edges(Src, Edges) -&gt; any()</code></p>
-<p> </p>
+<p><code>build_edges(Src::pid() | atom(), Edges::term()) -&gt; [#edge{}]</code><br></p>
+<p><code>Src</code>: Is the node from which the edge goes out<br>
+<code>Edges</code>: Are the outgoing edges in form [Dst, Weight]<br>
+</p>
 </div><p>Transforms the edges from JSON into internal format</p>
 
 <h3 class="function"><a name="get_pid_from_id-1">get_pid_from_id/1</a></h3>
 <div class="spec">
-<p><code>get_pid_from_id(Id) -&gt; any()</code></p>
+<p><code>get_pid_from_id(Id::term()) -&gt; pid() | atom()</code><br></p>
 <p> </p>
 </div><p>Transforms numeric ID into atom that represents the peer node</p>
 
 <h3 class="function"><a name="init_network-1">init_network/1</a></h3>
 <div class="spec">
-<p><code>init_network(InitDir) -&gt; any()</code></p>
-<p> </p>
+<p><code>init_network(InitDir::string()) -&gt; [pid()] | [atom()]</code><br></p>
+<p><code>InitDir</code>: The name of the directory containing the configuration files<br>
+</p>
+<p>returns: The list of the names of the nodes that have been initialized</p>
 </div><p>Initializes the network from the JSON config files in InitDir</p>
 <hr>
 

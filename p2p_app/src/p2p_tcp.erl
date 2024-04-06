@@ -6,6 +6,7 @@
 %% @doc Starts the tcp server
 %% @param Port is the port on which it will listen for requests
 %% @end
+-spec start_link(Args :: term()) -> {ok, Pid :: pid()} | {error, Reason :: term()}.
 start_link(Args) ->
     Pid = spawn_link(fun() -> init(Args) end),
     {ok, Pid}.

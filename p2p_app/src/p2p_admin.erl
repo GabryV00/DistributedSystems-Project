@@ -2,17 +2,23 @@
 
 -export([start_link/1, spawn_node/2]).
 
+-include("records.hrl").
 -define(EVENTS_FILENAME, "json/events.json").
 
 %% @doc Spawns the admin process
+%% @param Supervisor The pid of the admin supervisor
 %% @end
+-spec start_link(Supervisor :: pid()) -> {ok, pid()} | {error, Reason :: term()}.
 start_link(Supervisor) ->
     Pid = spawn_link(?MODULE, init, [Supervisor]),
     register(admin, Pid),
     {ok, Pid}.
 
 %% @doc Asks the node manager to spawn a new node with the given name and neighbors
+%% @param Name The name of the new node
+%% @param Adjs The list of incident edges of the node
 %% @end
+-spec spawn_node(Name :: pid(), Adjs :: [#edge{}]) -> {ok, Child :: pid()} | {error, Reason :: term()}.
 spawn_node(Name, Adjs) ->
     NodeSupSpec = #{id => make_ref(),
                     start => {'p2p_node_sup', start_link, [Name, Adjs]},

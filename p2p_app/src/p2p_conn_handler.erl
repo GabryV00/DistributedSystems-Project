@@ -23,8 +23,9 @@ start_link() ->
 %% @param From The source peer
 %% @param To The destination peer
 %% @end
+-spec talk_to(ConnHandlerPid :: pid(), ForwardHop :: pid(), From :: pid(), To :: pid()) -> ok.
 talk_to(ConnHandlerPid, ForwardHop, From, To) ->
-    ConnHandlerPid ! {change_config, ForwardHop, From, To}.
+    ConnHandlerPid ! {change_config, ForwardHop, From, To}, ok.
 
 %% @doc Same as talk_to/4, but also a backward hop is specified (to handle two-way communication)
 %% @param ConnHandlerPid The pid of the connection handler
@@ -35,15 +36,17 @@ talk_to(ConnHandlerPid, ForwardHop, From, To) ->
 %% @param From The source peer
 %% @param To The destination peer
 %% @end
+-spec talk_to(ConnHandlerPid :: pid(), ForwardHop :: pid(), BackwardHop :: pid(), From :: pid(), To :: pid()) -> ok.
 talk_to(ConnHandlerPid, ForwardHop, BackwardHop, From, To) ->
-    ConnHandlerPid ! {change_config, {ForwardHop, BackwardHop, From, To}}.
+    ConnHandlerPid ! {change_config, {ForwardHop, BackwardHop, From, To}}, ok.
 
 %% @doc Send data with a specific connection handler (which is bound to a single communication)
 %% @param ConnHandlerPid The pid of the connection handler
 %% @param Data Binary data to send
 %% @end
+-spec send_data(ConnHandlerPid :: pid(), Data :: binary()) -> ok.
 send_data(ConnHandlerPid, Data) ->
-    ConnHandlerPid ! {send, Data}.
+    ConnHandlerPid ! {send, Data}, ok.
 
 
 %% @private

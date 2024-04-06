@@ -24,8 +24,10 @@
 
 <h3 class="function"><a name="send_data-2">send_data/2</a></h3>
 <div class="spec">
-<p><code>send_data(ConnHandlerPid, Data) -&gt; any()</code></p>
-<p> </p>
+<p><code>send_data(ConnHandlerPid::pid(), Data::binary()) -&gt; ok</code><br></p>
+<p><code>ConnHandlerPid</code>: The pid of the connection handler<br>
+<code>Data</code>: Binary data to send<br>
+</p>
 </div><p>Send data with a specific connection handler (which is bound to a single communication)</p>
 
 <h3 class="function"><a name="start_link-0">start_link/0</a></h3>
@@ -36,14 +38,24 @@
 
 <h3 class="function"><a name="talk_to-4">talk_to/4</a></h3>
 <div class="spec">
-<p><code>talk_to(ConnHandlerPid, ForwardHop, From, To) -&gt; any()</code></p>
-<p> </p>
+<p><code>talk_to(ConnHandlerPid::pid(), ForwardHop::pid(), From::pid(), To::pid()) -&gt; ok</code><br></p>
+<p><code>ConnHandlerPid</code>: The pid of the connection handler<br>
+<code>ForwardHop</code>: The pid of the connection handler to which to send the
+   data in order to reach To<br>
+<code>From</code>: The source peer<br>
+<code>To</code>: The destination peer<br>
+</p>
 </div><p>Tells the connection handler which is the next hop to forward the data to</p>
 
 <h3 class="function"><a name="talk_to-5">talk_to/5</a></h3>
 <div class="spec">
-<p><code>talk_to(ConnHandlerPid, ForwardHop, BackwardHop, From, To) -&gt; any()</code></p>
-<p> </p>
+<p><code>talk_to(ConnHandlerPid::pid(), ForwardHop::pid(), BackwardHop::pid(), From::pid(), To::pid()) -&gt; ok</code><br></p>
+<p><code>ConnHandlerPid</code>: The pid of the connection handler<br>
+<code>ForwardHop</code>: The pid of the connection handler to which to send the
+   data in order to reach From<br>
+<code>From</code>: The source peer<br>
+<code>To</code>: The destination peer<br>
+</p>
 </div><p>Same as talk_to/4, but also a backward hop is specified (to handle two-way communication)</p>
 <hr>
 

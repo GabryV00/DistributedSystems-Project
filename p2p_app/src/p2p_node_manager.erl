@@ -9,6 +9,7 @@
 -module(p2p_node_manager).
 
 -behaviour(supervisor).
+-include("records.hrl").
 
 %% API
 -export([start_link/0, spawn_node/2]).
@@ -22,6 +23,11 @@
 %%% API functions
 %%%===================================================================
 
+%% @doc Adds a child process for a new peer in the supervisor list.
+%% @param Name The name of the new peer
+%% @param Adjs The list of incident edges of the peer
+%% @end
+-spec spawn_node(Name :: pid(), Adjs :: [#edge{}]) -> {ok, Child :: pid()}.
 spawn_node(Name, Adjs) ->
     NodeSupSpec = #{id => make_ref(),
                     start => {'p2p_node_sup', start_link, [Name, Adjs]},

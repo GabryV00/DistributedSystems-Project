@@ -5,6 +5,7 @@
 
 %% @doc Transforms numeric ID into atom that represents the peer node
 %% @end
+-spec get_pid_from_id(Id :: term()) -> pid() | atom().
 get_pid_from_id(Id) when is_integer(Id) ->
     list_to_atom("node" ++ integer_to_list(Id));
 get_pid_from_id(Id) when is_list(Id) ->
@@ -16,6 +17,7 @@ get_pid_from_id(Id) when is_bitstring(Id) ->
 %% @param Src Is the node from which the edge goes out
 %% @param Edges Are the outgoing edges in form [Dst, Weight]
 %% @end
+-spec build_edges(Src :: pid() | atom(), Edges :: term()) -> [#edge{}].
 build_edges(Src, Edges) when is_list(Edges)->
     lists:map(fun([Dst, Weight]) ->
                 #edge{src = Src,
@@ -24,7 +26,10 @@ build_edges(Src, Edges) when is_list(Edges)->
               end, Edges).
 
 %% @doc Initializes the network from the JSON config files in InitDir
+%% @param InitDir The name of the directory containing the configuration files
+%% @return The list of the names of the nodes that have been initialized
 %% @end
+-spec init_network(InitDir :: string()) -> [pid()] | [atom()].
 init_network(InitDir) ->
     {ok, Files} = file:list_dir(InitDir),
     CompletePaths = [InitDir ++ File || File <- Files],

@@ -5,6 +5,7 @@
 -include_lib("kernel/include/logger.hrl").
 
 %% @doc Application entrypoint.
+%% @param Args Various arguments.
 %% @end
 main(Args) ->
     {ok, #{verbose := Verbose, init := InitDir}, _, _} =

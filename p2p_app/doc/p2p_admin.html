@@ -22,14 +22,17 @@
 
 <h3 class="function"><a name="spawn_node-2">spawn_node/2</a></h3>
 <div class="spec">
-<p><code>spawn_node(Name, Adjs) -&gt; any()</code></p>
-<p> </p>
+<p><code>spawn_node(Name::pid(), Adjs::[#edge{}]) -&gt; {ok, Child::pid()} | {error, Reason::term()}</code><br></p>
+<p><code>Name</code>: The name of the new node<br>
+<code>Adjs</code>: The list of incident edges of the node<br>
+</p>
 </div><p>Asks the node manager to spawn a new node with the given name and neighbors</p>
 
 <h3 class="function"><a name="start_link-1">start_link/1</a></h3>
 <div class="spec">
-<p><code>start_link(Supervisor) -&gt; any()</code></p>
-<p> </p>
+<p><code>start_link(Supervisor::pid()) -&gt; {ok, pid()} | {error, Reason::term()}</code><br></p>
+<p><code>Supervisor</code>: The pid of the admin supervisor<br>
+</p>
 </div><p>Spawns the admin process</p>
 <hr>
 

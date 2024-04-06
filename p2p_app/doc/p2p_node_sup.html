@@ -19,19 +19,20 @@
 <h2><a name="description">Description</a></h2>
   
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#start_connection_handler-1">start_connection_handler/1</a></td><td></td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#start_connection_handler-1">start_connection_handler/1</a></td><td>Starts a new connection handler for a peer node.</td></tr>
 <tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td>
   Starts the supervisor.</td></tr>
-<tr><td valign="top"><a href="#start_mst_worker-2">start_mst_worker/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#start_mst_worker-2">start_mst_worker/2</a></td><td>Starts a worker process for the Minimum Spanning Tree (MST) computation.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
 <h3 class="function"><a name="start_connection_handler-1">start_connection_handler/1</a></h3>
 <div class="spec">
-<p><code>start_connection_handler(SupRef) -&gt; any()</code></p>
-<p> </p>
-</div>
+<p><code>start_connection_handler(SupRef::pid()) -&gt; {ok, Pid::pid()} | {error, {Reason::term(), Pid::pid()}}</code><br></p>
+<p><code>SupRef</code>: The pid of the connection handler supervisor of the peer<br>
+</p>
+</div><p>Starts a new connection handler for a peer node.</p>
 
 <h3 class="function"><a name="start_link-2">start_link/2</a></h3>
 <div class="spec">
@@ -42,9 +43,18 @@
 
 <h3 class="function"><a name="start_mst_worker-2">start_mst_worker/2</a></h3>
 <div class="spec">
-<p><code>start_mst_worker(SupRef, Name) -&gt; any()</code></p>
-<p> </p>
-</div>
+<p><code>start_mst_worker(SupRef::pid(), Name::term()) -&gt; {ok, Pid::pid()} | {error, {Reason::term(), Pid::pid()}}</code><br></p>
+<p><code>SupRef</code>: The reference to the supervisor where the worker process will be started.<br>
+<code>Name</code>: A term specifying the name for the worker process.
+ <br>
+</p>
+<p>returns: <code>{ok, Pid}</code> if the worker process is successfully started, where Pid is the process identifier of the new worker.
+          <code>{error, {Reason, Pid}}</code> if the worker cannot be started, where Reason is a term specifying the reason for the failure, and Pid is the process identifier of the worker process.
+ </p>
+</div><p><p>Starts a worker process for the Minimum Spanning Tree (MST) computation.  
+This function is typically used within a supervisor to start a worker process.</p>
+ 
+ </p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>

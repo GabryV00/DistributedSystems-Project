@@ -45,9 +45,10 @@
 %% @doc Extract node information (id, edges) from config file and start a node
 %% by asking the supervisor
 %% @param FileName A JSON encoded file with the node's data
-%% @returns {Id, Edges}, where Id is the nodeId (atom) extracted from the file
+%% @returns `{Id, Edges}', where Id is the nodeId (atom) extracted from the file
 %% and Edeges is a list of #edge records
 %% @end
+-spec init_node_from_file(FileName :: nonempty_string()) -> {Id :: term(), Edges :: [#edge{}]}.
 init_node_from_file(FileName) ->
     try
         {ok, Json} = file:read_file(FileName),
@@ -66,24 +67,34 @@ init_node_from_file(FileName) ->
 %% @param From The peer who starts the communication request
 %% @param To The peer who receives the communication request
 %% @param Band the minimum band needed for the communication
-%% @returns {ok, ConnHandlerPid} if the request is successful
-%%          {timeout, NodeName} if NodeName on the path to `To` times out on the request
-%%          {noproc, NodeName} if NodeName doesn't exist on the path to `To`
-%%          {no_band, NodeName} if the connection to NodeName on the path doesn't provide enough band
+%% @returns `{ok, ConnHandlerPid}' if the request is successful
+%%          `{timeout, NodeName}' if `NodeName' on the path to `To' times out on the request
+%%          `{noproc, NodeName}' if `NodeName' doesn't exist on the path to `To'
+%%          `{no_band, NodeName}' if the connection to `NodeName' on the path doesn't provide enough band
 %% @end
+-spec request_to_communicate(From :: pid(), To :: pid(), Band :: non_neg_integer() | float()) ->
+    {ok, ConnHandlerPid :: pid()} |
+    {timeout, NodeName :: pid()} |
+    {noproc, NodeName :: pid()} |
+    {no_band, NodeName :: pid()}.
 request_to_communicate(From, To, Band) ->
     gen_server:call(From, {request_to_communicate, {From, To, Band}}).
 
-%% @doc Closes the connection for both peers
+%% @doc Closes the connection for both peers.
 %% This is performed asynchronously, so there is no guarantee that all the
-%% nodes in the path are reached
+%% nodes in the path are reached.
 %% @param From The peer who starts the closing request
 %% @param To The peer who receives the closing request
-%% @returns ok if the request is successful
-%%          {timeout, From} if From didn't answer in time
-%%          {noproc, From} if From doesn't exist
-%%          {shutdown, From} if From has been shut down from it's supervisor
+%% @returns `ok' if the request is successful
+%%          `{timeout, From}' if From didn't answer in time
+%%          `{noproc, From}' if From doesn't exist
+%%          `{shutdown, From}' if From has been shut down from it's supervisor
 %% @end
+-spec close_connection(From :: pid(), To :: pid()) ->
+    ok |
+    {timeout, From :: pid()} |
+    {noproc, From :: pid()} |
+    {shutdown, From :: pid()}.
 close_connection(From, To) ->
     try
         gen_server:call(From, {close_connection, To})
@@ -104,12 +115,18 @@ close_connection(From, To) ->
 %% @param From The peer who sends the data
 %% @param To The peer who receives the data
 %% @param Data Binary data to be sent
-%% @returns ok if the request is successful
-%%          {no_connection, {From, To}} if there is no active connection between the peers
-%%          {timeout, From} if From didn't answer in time
-%%          {noproc, From} if From doesn't exist
-%%          {shutdown, From} if From has been shut down from it's supervisor
+%% @returns `ok' if the request is successful
+%%          `{no_connection, {From, To}}' if there is no active connection between the peers
+%%          `{timeout, From}' if From didn't answer in time
+%%          `{noproc, From}' if From doesn't exist
+%%          `{shutdown, From}' if From has been shut down from it's supervisor
 %% @end
+-spec send_data(From :: pid(), To :: pid(), Data :: binary()) ->
+    ok |
+    {no_connection, {From :: pid(), To :: pid()}} |
+    {timeout, From :: pid()} |
+    {noproc, From :: pid()} |
+    {shutdown, From :: pid()}.
 send_data(From, To, Data) ->
     try
         gen_server:call(From, {send_data, From, To, Data})
@@ -126,11 +143,17 @@ send_data(From, To, Data) ->
 
 %% @doc Makes the node Ref start the computation of the MST by notifying it's neighbors
 %% @param Ref The peer (pid or atom) who should start the algorithm
-%% @returns ok if the request is successful
-%%          {timeout, Ref} if Ref didn't answer in time
-%%          {noproc, Ref} if Ref doesn't exist
-%%          {shutdown, Ref} if Ref has been shut down from it's supervisor
+%% @returns `ok' if the request is successful
+%%          `{timeout, Ref}' if Ref didn't answer in time
+%%          `{noproc, Ref}' if Ref doesn't exist
+%%          `{shutdown, Ref}' if Ref has been shut down from it's supervisor
 %% @end
+%
+-spec start_mst_computation(Ref :: pid()) ->
+    ok |
+    {timeout, Ref :: pid()} |
+    {noproc, Ref :: pid()} |
+    {shutdown, Ref :: pid()}.
 start_mst_computation(Ref) ->
     try
         gen_server:call(Ref, start_mst, get_timeout())
@@ -148,11 +171,16 @@ start_mst_computation(Ref) ->
 %% @doc Makes the node Ref leave the network "gracefully"
 %% Terminates also all the connection handlers and the MST computer of the peer
 %% @param Ref The peer (pid or atom) who should leave the network
-%% @returns ok if the request is successful
-%%          {timeout, Ref} if Ref didn't answer in time
-%%          {noproc, Ref} if Ref doesn't exist
-%%          {shutdown, Ref} if Ref has been shut down from it's supervisor
+%% @returns `ok' if the request is successful
+%%          `{timeout, Ref}' if Ref didn't answer in time
+%%          `{noproc, Ref}' if Ref doesn't exist
+%%          `{shutdown, Ref}' if Ref has been shut down from it's supervisor
 %% @end
+-spec leave_network(Ref :: pid()) ->
+    ok |
+    {timeout, Ref :: pid()} |
+    {noproc, Ref :: pid()} |
+    {shutdown, Ref :: pid()}.
 leave_network(Ref) ->
     try
         gen_server:call(Ref, leave)
@@ -168,11 +196,16 @@ leave_network(Ref) ->
 %% @doc Instructs the peer to join the network with Adjs as neighbors
 %% @param Ref The peer (pid or atom) who should join the network
 %% @param Adjs List of #edge records with the other nodes' names
-%% @returns ok if the request is successful
-%%          {timeout, Ref} if Ref didn't answer in time
-%%          {noproc, Ref} if Ref doesn't exist
-%%          {shutdown, Ref} if Ref has been shut down from it's supervisor
+%% @returns `ok' if the request is successful
+%%          `{timeout, Ref}' if Ref didn't answer in time
+%%          `{noproc, Ref}' if Ref doesn't exist
+%%          `{shutdown, Ref}' if Ref has been shut down from it's supervisor
 %% @end
+-spec join_network(Ref :: pid(), Adjs :: [#edge{}]) ->
+    ok |
+    {timeout, Ref :: pid()} |
+    {noproc, Ref :: pid()} |
+    {shutdown, Ref :: pid()}.
 join_network(Ref, Adjs) when is_atom(Ref) ->
     try
         validate_edges(Ref, Adjs),
@@ -202,11 +235,16 @@ join_network(_Ref, _) ->
 
 %% @doc Inspects the state of the peer
 %% @param Ref The peer (pid or atom) to inspect
-%% @returns #state record if the request is successful
-%%          {timeout, Ref} if Ref didn't answer in time
-%%          {noproc, Ref} if Ref doesn't exist
-%%          {shutdown, Ref} if Ref has been shut down from it's supervisor
+%% @returns `#state' record if the request is successful
+%%          `{timeout, Ref}' if Ref didn't answer in time
+%%          `{noproc, Ref}' if Ref doesn't exist
+%%          `{shutdown, Ref}' if Ref has been shut down from it's supervisor
 %% @end
+-spec get_state(Ref :: pid()) ->
+    #state{} |
+    {timeout, Ref :: pid()} |
+    {noproc, Ref :: pid()} |
+    {shutdown, Ref :: pid()}.
 get_state(Ref) ->
     try
         gen_server:call(Ref, get_state)

@@ -19,9 +19,7 @@
 <h2><a name="description">Description</a></h2>
   
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#close_connection-2">close_connection/2</a></td><td>Closes the connection for both peers
-  This is performed asynchronously, so there is no guarantee that all the
-  nodes in the path are reached.</td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#close_connection-2">close_connection/2</a></td><td>Closes the connection for both peers.</td></tr>
 <tr><td valign="top"><a href="#get_state-1">get_state/1</a></td><td>Inspects the state of the peer.</td></tr>
 <tr><td valign="top"><a href="#init_node_from_file-1">init_node_from_file/1</a></td><td>Extract node information (id, edges) from config file and start a node
   by asking the supervisor.</td></tr>
@@ -41,48 +39,88 @@
 
 <h3 class="function"><a name="close_connection-2">close_connection/2</a></h3>
 <div class="spec">
-<p><code>close_connection(From, To) -&gt; any()</code></p>
-<p> </p>
-</div><p>Closes the connection for both peers
+<p><code>close_connection(From::pid(), To::pid()) -&gt; ok | {timeout, From::pid()} | {noproc, From::pid()} | {shutdown, From::pid()}</code><br></p>
+<p><code>From</code>: The peer who starts the closing request<br>
+<code>To</code>: The peer who receives the closing request<br>
+</p>
+<p>returns: <code>ok</code> if the request is successful
+           <code>{timeout, From}</code> if From didn't answer in time
+           <code>{noproc, From}</code> if From doesn't exist
+           <code>{shutdown, From}</code> if From has been shut down from it's supervisor</p>
+</div><p>Closes the connection for both peers.
   This is performed asynchronously, so there is no guarantee that all the
-  nodes in the path are reached</p>
+  nodes in the path are reached.</p>
 
 <h3 class="function"><a name="get_state-1">get_state/1</a></h3>
 <div class="spec">
-<p><code>get_state(Ref) -&gt; any()</code></p>
-<p> </p>
+<p><code>get_state(Ref::pid()) -&gt; #state{name = atom(), adjs = [#edge{dst = pid(), src = pid(), weight = non_neg_integer()}], mst_adjs = [#edge{dst = pid(), src = pid(), weight = non_neg_integer()}], supervisor = pid(), current_mst_session = non_neg_integer(), connections = list(), mst_computer_pid = pid(), mst_state = computed | computing | undefined, mst_routing_table = #{atom() =&gt; #edge{dst = pid(), src = pid(), weight = non_neg_integer()}}, mst_parent = #edge{dst = pid(), src = pid(), weight = non_neg_integer()} | none, conn_handlers = #{{term(), term()} =&gt; pid()}} | {timeout, Ref::pid()} | {noproc, Ref::pid()} | {shutdown, Ref::pid()}</code><br></p>
+<p><code>Ref</code>: The peer (pid or atom) to inspect<br>
+</p>
+<p>returns: <code>#state</code> record if the request is successful
+           <code>{timeout, Ref}</code> if Ref didn't answer in time
+           <code>{noproc, Ref}</code> if Ref doesn't exist
+           <code>{shutdown, Ref}</code> if Ref has been shut down from it's supervisor</p>
 </div><p>Inspects the state of the peer</p>
 
 <h3 class="function"><a name="init_node_from_file-1">init_node_from_file/1</a></h3>
 <div class="spec">
-<p><code>init_node_from_file(FileName) -&gt; any()</code></p>
-<p> </p>
+<p><code>init_node_from_file(FileName::nonempty_string()) -&gt; {Id::term(), Edges::[#edge{dst = pid(), src = pid(), weight = non_neg_integer()}]}</code><br></p>
+<p><code>FileName</code>: A JSON encoded file with the node's data<br>
+</p>
+<p>returns: <code>{Id, Edges}</code>, where Id is the nodeId (atom) extracted from the file
+  and Edeges is a list of #edge records</p>
 </div><p>Extract node information (id, edges) from config file and start a node
   by asking the supervisor</p>
 
 <h3 class="function"><a name="join_network-2">join_network/2</a></h3>
 <div class="spec">
-<p><code>join_network(Ref, Adjs) -&gt; any()</code></p>
-<p> </p>
+<p><code>join_network(Ref::pid(), Adjs::[#edge{dst = pid(), src = pid(), weight = non_neg_integer()}]) -&gt; ok | {timeout, Ref::pid()} | {noproc, Ref::pid()} | {shutdown, Ref::pid()}</code><br></p>
+<p><code>Ref</code>: The peer (pid or atom) who should join the network<br>
+<code>Adjs</code>: List of #edge records with the other nodes' names<br>
+</p>
+<p>returns: <code>ok</code> if the request is successful
+           <code>{timeout, Ref}</code> if Ref didn't answer in time
+           <code>{noproc, Ref}</code> if Ref doesn't exist
+           <code>{shutdown, Ref}</code> if Ref has been shut down from it's supervisor</p>
 </div><p>Instructs the peer to join the network with Adjs as neighbors</p>
 
 <h3 class="function"><a name="leave_network-1">leave_network/1</a></h3>
 <div class="spec">
-<p><code>leave_network(Ref) -&gt; any()</code></p>
-<p> </p>
+<p><code>leave_network(Ref::pid()) -&gt; ok | {timeout, Ref::pid()} | {noproc, Ref::pid()} | {shutdown, Ref::pid()}</code><br></p>
+<p><code>Ref</code>: The peer (pid or atom) who should leave the network<br>
+</p>
+<p>returns: <code>ok</code> if the request is successful
+           <code>{timeout, Ref}</code> if Ref didn't answer in time
+           <code>{noproc, Ref}</code> if Ref doesn't exist
+           <code>{shutdown, Ref}</code> if Ref has been shut down from it's supervisor</p>
 </div><p>Makes the node Ref leave the network "gracefully"
   Terminates also all the connection handlers and the MST computer of the peer</p>
 
 <h3 class="function"><a name="request_to_communicate-3">request_to_communicate/3</a></h3>
 <div class="spec">
-<p><code>request_to_communicate(From, To, Band) -&gt; any()</code></p>
-<p> </p>
+<p><code>request_to_communicate(From::pid(), To::pid(), Band::non_neg_integer() | float()) -&gt; {ok, ConnHandlerPid::pid()} | {timeout, NodeName::pid()} | {noproc, NodeName::pid()} | {no_band, NodeName::pid()}</code><br></p>
+<p><code>From</code>: The peer who starts the communication request<br>
+<code>To</code>: The peer who receives the communication request<br>
+<code>Band</code>: the minimum band needed for the communication<br>
+</p>
+<p>returns: <code>{ok, ConnHandlerPid}</code> if the request is successful
+           <code>{timeout, NodeName}</code> if <code>NodeName</code> on the path to <code>To</code> times out on the request
+           <code>{noproc, NodeName}</code> if <code>NodeName</code> doesn't exist on the path to <code>To</code>
+           <code>{no_band, NodeName}</code> if the connection to <code>NodeName</code> on the path doesn't provide enough band</p>
 </div><p>Request to communicate from a peer to another with a specified bandwidth</p>
 
 <h3 class="function"><a name="send_data-3">send_data/3</a></h3>
 <div class="spec">
-<p><code>send_data(From, To, Data) -&gt; any()</code></p>
-<p> </p>
+<p><code>send_data(From::pid(), To::pid(), Data::binary()) -&gt; ok | {no_connection, {From::pid(), To::pid()}} | {timeout, From::pid()} | {noproc, From::pid()} | {shutdown, From::pid()}</code><br></p>
+<p><code>From</code>: The peer who sends the data<br>
+<code>To</code>: The peer who receives the data<br>
+<code>Data</code>: Binary data to be sent<br>
+</p>
+<p>returns: <code>ok</code> if the request is successful
+           <code>{no_connection, {From, To}}</code> if there is no active connection between the peers
+           <code>{timeout, From}</code> if From didn't answer in time
+           <code>{noproc, From}</code> if From doesn't exist
+           <code>{shutdown, From}</code> if From has been shut down from it's supervisor</p>
 </div><p>From sends some binary data to To
   This is performed asynchronously, so there is no guarantee that all the
   nodes in the path are reached. Requires a connection established with request_to_communicate/3</p>
@@ -96,8 +134,13 @@
 
 <h3 class="function"><a name="start_mst_computation-1">start_mst_computation/1</a></h3>
 <div class="spec">
-<p><code>start_mst_computation(Ref) -&gt; any()</code></p>
-<p> </p>
+<p><code>start_mst_computation(Ref::pid()) -&gt; ok | {timeout, Ref::pid()} | {noproc, Ref::pid()} | {shutdown, Ref::pid()}</code><br></p>
+<p><code>Ref</code>: The peer (pid or atom) who should start the algorithm<br>
+</p>
+<p>returns: <code>ok</code> if the request is successful
+           <code>{timeout, Ref}</code> if Ref didn't answer in time
+           <code>{noproc, Ref}</code> if Ref doesn't exist
+           <code>{shutdown, Ref}</code> if Ref has been shut down from it's supervisor</p>
 </div><p>Makes the node Ref start the computation of the MST by notifying it's neighbors</p>
 <hr>
 

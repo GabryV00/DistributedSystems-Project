@@ -23,6 +23,18 @@
 %%%===================================================================
 
 
+%% @doc Starts a worker process for the Minimum Spanning Tree (MST) computation.
+%% This function is typically used within a supervisor to start a worker process.
+%%
+%%
+%% @param SupRef The reference to the supervisor where the worker process will be started.
+%% @param Name A term specifying the name for the worker process.
+%%
+%% @return `{ok, Pid}' if the worker process is successfully started, where Pid is the process identifier of the new worker.
+%%         `{error, {Reason, Pid}}' if the worker cannot be started, where Reason is a term specifying the reason for the failure, and Pid is the process identifier of the worker process.
+%%
+%% @end
+-spec start_mst_worker(SupRef :: pid(), Name :: term()) -> {ok, Pid :: pid()} | {error, {Reason :: term(), Pid :: pid()}}.
 start_mst_worker(SupRef, Name) ->
     Spec = #{id => 'mst_computer',
 	       start => {ghs, start_link, [Name]},
@@ -33,6 +45,10 @@ start_mst_worker(SupRef, Name) ->
     supervisor:start_child(SupRef, Spec).
 
 
+%% @doc Starts a new connection handler for a peer node.
+%% @param SupRef The pid of the connection handler supervisor of the peer
+%% @end
+-spec start_connection_handler(SupRef :: pid()) -> {ok, Pid :: pid()} | {error, {Reason :: term(), Pid :: pid()}}.
 start_connection_handler(SupRef) ->
     {_Id, ConnSup, _Type, _Modules} = lists:keyfind('p2p_conn_handler_sup', 1, supervisor:which_children(SupRef)),
     Spec = #{id => make_ref(),
