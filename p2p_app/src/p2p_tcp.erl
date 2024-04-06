@@ -113,11 +113,11 @@ process_data(Data) ->
 process_reply(Reply) ->
     case Reply of
         ok ->
-            jsone:encode(#{<<"outcome">> => "ACK", <<"message">> => <<"">>});
+            jsone:encode(#{<<"outcome">> => "ok", <<"message">> => <<"THE REQUEST WAS SUCCESSFUL">>});
         {ok, Message} ->
-            jsone:encode(#{<<"outcome">> => "ACK", <<"message">> => Message});
+            jsone:encode(#{<<"outcome">> => "ok", <<"message">> => Message});
         {Error, Message} ->
             jsone:encode(#{<<"outcome">> => "error", <<"message">> => {Error, Message}});
         Message ->
-            jsone:encode(#{<<"outcome">> => "ACK", <<"message">> => Message})
+            jsone:encode(#{<<"outcome">> => "ok", <<"message">> => Message})
     end.
