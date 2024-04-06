@@ -14,6 +14,16 @@ TCP_ADDR = "127.0.0.1"
 
 LOG_FILE_NAME = '../../p2p_app/logs/log.txt'
 
+def interpret_response(data):
+    """
+    Function that takes bytes in inputs and return the interpretation of the json
+    """
+    res = json.load(data.decode())
+    ris = res['outcome']
+    msg = res['message']
+
+    return ris, msg
+
 def open_conn(id_peerA, id_peerB, band):
     """
     Function that send the request for opening a connection between PeerA and PeerB, with a specific bandwidth
@@ -30,12 +40,7 @@ def open_conn(id_peerA, id_peerB, band):
     s.sendall(json.dumps(dictionary).encode())
     data = s.recv(1024)
     s.close()
-    
-    
-    if b"ACK" in data:
-        return True
-    else:
-        return False
+    return interpret_response(data)
 
 def close_conn(id_peerA, id_peerB):
     """
@@ -51,6 +56,7 @@ def close_conn(id_peerA, id_peerB):
     s.sendall(json.dumps(dictionary).encode())
     s.recv(1024)
     s.close()
+    return interpret_response(data)
 
 def send_new(id_peer, edges):
     """
@@ -66,6 +72,7 @@ def send_new(id_peer, edges):
     s.sendall(json.dumps(dictionary).encode())
     data = s.recv(1024)
     s.close()
+    return interpret_response(data)
 
 def send_kill(id_peer):
     """
@@ -80,6 +87,7 @@ def send_kill(id_peer):
     s.sendall(json.dumps(dictionary).encode())
     data = s.recv(1024)
     s.close()
+    return interpret_response(data)
 
 def generate_graph(PATH):
     """
@@ -126,11 +134,11 @@ def add_node():
     edges = request.form['edges']
     print(f'NodeID: {node_id}\nEdges:{edges}')
     
-    send_new(node_id, edges)
+    ris, msg = send_new(node_id, edges)
     generate_graph("./../init/config_files")
     with open(LOG_FILE_NAME, 'r') as file:
         content = file.read()
-    return render_template('admin.html', content=content)
+    return render_template('admin.html', content=content, status=ris, message=msg)
 
 @app.route('/remove_node', methods=['POST'])
 def remove_node():
@@ -140,11 +148,11 @@ def remove_node():
     node_id = request.form['rid']
     print(f'NodeID to remove: {node_id}')
     
-    send_kill(node_id)
+    ris, msg = send_kill(node_id)
     generate_graph("./../init/config_files")
     with open(LOG_FILE_NAME, 'r') as file:
         content = file.read()
-    return render_template('admin.html', content=content)
+    return render_template('admin.html', content=content, status=ris, message=msg)
 
 
 #----------------------PEER---------------------------------
@@ -162,10 +170,9 @@ def peer():
     #return render_template('peer.html')
     
     #send data to Erlang node via TCP
-    if open_conn(id_peerA, id_peerB, band):
-        return render_template('peer.html', status='HAS BEEN SENT CORRECTLY')
-    else:
-        return render_template('peer.html', status='HAS NOT BEEN SENTED! ERROR!')
+
+    ris, msg = open_conn(id_peerA, id_peerB, band)
+    render_template('peer.html', status=ris, message=msg)
 
 @app.route("/close_conn/", methods=['GET', 'POST'])
 def close_conn():
@@ -175,8 +182,8 @@ def close_conn():
     id_peerA = request.form.get('idpa')
     id_peerB = request.form.get('idpb')
 
-    close_conn(id_peerA, id_peerB)
-    return render_template('peer.html')
+    ris, msg = close_conn(id_peerA, id_peerB)
+    return render_template('peer.html', status=ris, message=msg)
 
 #----------------------LOG---------------------------------
 @app.route("/log/")

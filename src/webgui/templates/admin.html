@@ -16,6 +16,13 @@
 <body> 
     <h1>ADMIN CONTROL PANEL</h1>
     <hr>
+    {%  if status %}
+    <h1> REQUEST STATUS: {{status}}</h1>
+{%  endif %}
+{%  if message %}
+    <h1> {{message}}</h1>
+{%  endif %}
+    <hr>
     <form action="/add_node" method="post">
         Enter the ID of the new peer: <input name="id"> <br><br>
 
