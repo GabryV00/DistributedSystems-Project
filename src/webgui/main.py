@@ -1,5 +1,4 @@
 import os
-import time
 import json
 import socket
 import graphviz
@@ -54,7 +53,7 @@ def close_conn(id_peerA, id_peerB):
             "idB" : id_peerB
         }
     s.sendall(json.dumps(dictionary).encode())
-    s.recv(1024)
+    data = s.recv(1024)
     s.close()
     return interpret_response(data)
 
