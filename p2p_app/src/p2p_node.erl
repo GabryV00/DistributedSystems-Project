@@ -148,7 +148,6 @@ send_data(From, To, Data) ->
 %%          `{noproc, Ref}' if Ref doesn't exist
 %%          `{shutdown, Ref}' if Ref has been shut down from it's supervisor
 %% @end
-%
 -spec start_mst_computation(Ref :: pid()) ->
     ok |
     {timeout, Ref :: pid()} |
@@ -339,7 +338,7 @@ handle_call({join, Adjs} = Req, _From, #state{name = Name, supervisor = Supervis
                  adjs = NewAdjs,
                  mst_computer_pid = MstComputer,
                  mst_adjs = MstAdjs},
-    % dump_config(NewState),
+    dump_config(NewState),
     {reply, ok, NewState};
 %% A new neighbor appeared and asks to join the network
 handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
@@ -369,7 +368,7 @@ handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
                  mst_computer_pid = MstComputer
                 },
     % Reply to the neighbor with the pid of the MST process
-    % dump_config(NewState),
+    dump_config(NewState),
     {reply, MstComputer, NewState};
 handle_call(start_mst, _From, #state{name = Name,
                                      adjs = Adjs,
@@ -427,6 +426,7 @@ handle_call({request_to_communicate, {Who, To, _Band, LastHop}} = Req, _From, St
 handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To /= State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     ConnHandlerPid = get_connection_handler(State#state.supervisor),
+    % TODO: manage parent = none and no next hop
     #edge{dst = NextHop, weight = Weight} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
     case Weight >= Band of
         true ->
@@ -583,6 +583,7 @@ handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#
         {_, EdgeToDelete} ->
             NewAdjs = lists:delete(EdgeToDelete, Adjs),
             NewMstAdjs = lists:delete(MstEdgeToDelete, MstAdjs);
+            % io:format("unreachable ~p~n", [EdgeToDelete]);
         false ->
             NewAdjs = Adjs,
             NewMstAdjs = MstAdjs
@@ -612,8 +613,8 @@ handle_info(_Info, State) ->
 		State :: term()) -> any().
 terminate(_Reason, State) ->
     Id = extract_id(State#state.name),
-    % file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
-    dump_termination(Id),
+    file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
+    % dump_termination(Id),
     try
         exit(State#state.mst_computer_pid, kill),
         maps:foreach(fun(_ConnId, ConnHandler) -> exit(ConnHandler, kill) end, State#state.conn_handlers)
@@ -661,13 +662,13 @@ format_status(_Opt, Status) ->
 %% @param SessionID Is the session of the MST
 %% @end
 start_mst_computation(Name, Adjs, MstAdjs, MstComputerPid, SessionID) ->
-    MstComputerPid ! {SessionID, {change_adjs, MstAdjs}},
     lists:foreach(fun(#edge{dst = Dst}) ->
                           ?LOG_DEBUG("~p awakening node ~p", [Name, Dst]),
                           timer:sleep(10), % introducing latency
                           gen_server:cast(Dst, {awake, Name, SessionID})
                   end,
-                  Adjs).
+                  Adjs),
+    MstComputerPid ! {SessionID, {change_adjs, MstAdjs}}.
 
 
 
