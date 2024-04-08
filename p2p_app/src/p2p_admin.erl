@@ -10,7 +10,7 @@
 %% @end
 -spec start_link(Supervisor :: pid()) -> {ok, pid()} | {error, Reason :: term()}.
 start_link(Supervisor) ->
-    Pid = spawn_link(?MODULE, init, [Supervisor]),
+    Pid = spawn_link(fun() -> init(Supervisor) end),
     register(admin, Pid),
     {ok, Pid}.
 

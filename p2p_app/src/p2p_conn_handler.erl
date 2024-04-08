@@ -72,7 +72,7 @@ loop(State) ->
             io:format("(~p) received data ~p~n", [self(), Data]),
             {From, To} = State#state.conn_id,
             FileName = atom_to_list(From) ++ atom_to_list(To) ++ ".data",
-            write_to_file(Data, FileName);
+            process_received_data(Data, FileName);
         {forward, BackwardHop, Data} ->
             io:format("(~p) forwarding to forward-hop ~p~n", [self(), BackwardHop]),
             ForwardHop ! {forward, self(), Data};
@@ -85,7 +85,7 @@ loop(State) ->
 
 %% @private
 %% @end
-write_to_file(Data, FileName) ->
+process_received_data(Data, FileName) ->
     {ok, Handler} = file:open(FileName, [append]),
     file:write(Handler, Data),
     file:close(Handler).
