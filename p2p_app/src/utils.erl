@@ -35,4 +35,6 @@ init_network(InitDir) ->
     CompletePaths = [InitDir ++ File || File <- Files],
     NodesWithEdges = lists:map(fun p2p_node:init_node_from_file/1, CompletePaths),
     lists:foreach(fun({Node, Edges}) -> p2p_node:join_network(Node, Edges) end, NodesWithEdges),
-    _Nodes = [Node || {Node, _Edge} <- NodesWithEdges].
+    Nodes = [Node || {Node, _Edge} <- NodesWithEdges],
+    p2p_node:start_mst_computation(hd(Nodes)),
+    Nodes.
