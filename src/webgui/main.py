@@ -8,7 +8,7 @@ from flask import Flask, render_template, send_file, request
 app = Flask(__name__, template_folder="templates")
 
 ADMIN_PORT = 9000
-PEER_PORT = 9001
+PEER_PORT = 9000
 TCP_ADDR = "127.0.0.1"
 
 LOG_FILE_NAME = '../../p2p_app/logs/log.txt'
@@ -17,7 +17,7 @@ def interpret_response(data):
     """
     Function that takes bytes in inputs and return the interpretation of the json
     """
-    res = json.load(data.decode())
+    res = json.loads(data.decode())
     ris = res['outcome']
     msg = res['message']
 
@@ -39,9 +39,10 @@ def open_conn(id_peerA, id_peerB, band):
     s.sendall(json.dumps(dictionary).encode())
     data = s.recv(1024)
     s.close()
+
     return interpret_response(data)
 
-def close_conn(id_peerA, id_peerB):
+def close_con(id_peerA, id_peerB):
     """
     Function that send the request for closing a connection between PeerA and PeerB, if already exists
     """
@@ -111,7 +112,7 @@ def generate_graph(PATH):
         for n in edges:
             g.edge(f'{id_a}', f'{n[0]}', label=f'{n[1]}', color='blue')
         for n in edges_mst:
-           g.edge(f'{id_a}', f'{n[0]}', label=f'{n[1]}', color='green', penwidth='1.5', dir='forward')
+           g.edge(f'{id_a}', f'{n[0]}', label=f'{n[1]}', color='green', penwidth='1.5')
 
     g.render('./static/graph.gv').replace('\\', '/')
 
@@ -131,7 +132,7 @@ def add_node():
     """
     node_id = request.form['id']
     edges = request.form['edges']
-    print(f'NodeID: {node_id}\nEdges:{edges}')
+    # print(f'NodeID: {node_id}\nEdges:{edges}')
     
     ris, msg = send_new(node_id, edges)
     generate_graph("./../init/config_files")
@@ -145,7 +146,7 @@ def remove_node():
     Function that allows to remove a peer
     """
     node_id = request.form['rid']
-    print(f'NodeID to remove: {node_id}')
+    # print(f'NodeID to remove: {node_id}')
     
     ris, msg = send_kill(node_id)
     generate_graph("./../init/config_files")
@@ -165,13 +166,13 @@ def peer():
     id_peerB = request.form.get('idpb')
     band = request.form.get('band')
     
-    print(f'PeerA_ID = {id_peerA}\nPeerB_ID = {id_peerB}\nRequired bandwidth = {band}')
+    # print(f'PeerA_ID = {id_peerA}\nPeerB_ID = {id_peerB}\nRequired bandwidth = {band}')
     #return render_template('peer.html')
     
     #send data to Erlang node via TCP
 
     ris, msg = open_conn(id_peerA, id_peerB, band)
-    render_template('peer.html', status=ris, message=msg)
+    return render_template('peer.html', status=ris, message=msg)
 
 @app.route("/close_conn/", methods=['GET', 'POST'])
 def close_conn():
@@ -181,7 +182,7 @@ def close_conn():
     id_peerA = request.form.get('idpa')
     id_peerB = request.form.get('idpb')
 
-    ris, msg = close_conn(id_peerA, id_peerB)
+    ris, msg = close_con(id_peerA, id_peerB)
     return render_template('peer.html', status=ris, message=msg)
 
 #----------------------LOG---------------------------------
