@@ -47,8 +47,10 @@ handle_request(Socket, ConnNumber) ->
     case gen_tcp:recv(Socket, 0) of
         {ok, Data} ->
             % Process the received data
+            io:format("received request ~p~n", [Data]),
             Reply = process_data(Data),
             Response = process_reply(Reply),
+            io:format("sending reply: ~p~n", [Response]),
             % gen_tcp:close(Socket);
             gen_tcp:send(Socket, Response),
             handle_request(Socket, ConnNumber);
@@ -70,11 +72,12 @@ process_data(Data) ->
         % Extract the type of action to be performed
         case maps:get(<<"type">>, Command) of
             % Request to communicate
-            <<"req_con">> ->
+            <<"req_conn">> ->
                 From = utils:get_pid_from_id(maps:get(<<"idA">>, Command)),
                 To = utils:get_pid_from_id(maps:get(<<"idB">>, Command)),
-                Band = maps:get(<<"band">>, Command), % number
-                _Reply = p2p_node:request_to_communicate(From, To, Band),
+                Band = list_to_integer(binary_to_list(maps:get(<<"band">>, Command))), % number
+                io:format("band requested: ~p~n", [Band]),
+                Reply = p2p_node:request_to_communicate(From, To, Band),
                 ?LOG_DEBUG("(tcp) ~p asked ~p to communicate with bandwidth ~p", [From, To, Band]);
             % New peer added to the network
             <<"new_peer">> ->
@@ -82,23 +85,25 @@ process_data(Data) ->
                 Adjs = utils:build_edges(Id, maps:get(<<"edges">>, Command)),
                 p2p_admin:spawn_node(Id, []),
                 p2p_node:join_network(Id, Adjs),
-                p2p_node:start_mst_computation(Id),
+                timer:sleep(100),
+                Reply = p2p_node:start_mst_computation(Id),
                 ?LOG_DEBUG("(tcp) ~p started with adjs ~p~n", [Id, Adjs]);
             % Peer removed from the network
             <<"rem_peer">> ->
                 Id = utils:get_pid_from_id(maps:get(<<"id">>, Command)),
-                _Reply = p2p_node:leave_network(Id),
+                Reply = p2p_node:leave_network(Id),
                 ?LOG_DEBUG("(tcp) ~p left the network", [Id]);
             % Close the connection between two peers
             <<"close_conn">> ->
                 From = utils:get_pid_from_id(maps:get(<<"idA">>, Command)),
                 To = utils:get_pid_from_id(maps:get(<<"idB">>, Command)),
-                _Reply = p2p_node:close_connection(From, To),
+                Reply = p2p_node:close_connection(From, To),
                 ?LOG_DEBUG("(tcp) Closed connection between ~p and ~p", [From, To]);
             <<"get_state">> ->
                 Node = utils:get_pid_from_id(maps:get(<<"id">>, Command)),
-                p2p_node:get_state(Node)
-        end
+                Reply = p2p_node:get_state(Node)
+        end,
+        Reply
     catch
         error:{badarg, _Stack} ->
             ?LOG_ERROR("(tcp) Data not in JSON format: ~p~n", [Data]);
@@ -113,11 +118,11 @@ process_data(Data) ->
 process_reply(Reply) ->
     case Reply of
         ok ->
-            jsone:encode(#{<<"outcome">> => "ok", <<"message">> => <<"THE REQUEST WAS SUCCESSFUL">>});
+            jsone:encode(#{<<"outcome">> => <<"ok">>, <<"message">> => <<"THE REQUEST WAS SUCCESSFUL">>});
         {ok, Message} ->
-            jsone:encode(#{<<"outcome">> => "ok", <<"message">> => Message});
+            jsone:encode(#{<<"outcome">> => <<"ok">>, <<"message">> => Message});
         {Error, Message} ->
-            jsone:encode(#{<<"outcome">> => "error", <<"message">> => {Error, Message}});
+            jsone:encode(#{<<"outcome">> => <<"error">>, <<"message">> => {Error, Message}});
         Message ->
-            jsone:encode(#{<<"outcome">> => "ok", <<"message">> => Message})
+            jsone:encode(#{<<"outcome">> => <<"ok">>, <<"message">> => Message})
     end.
