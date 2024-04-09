@@ -16,12 +16,6 @@ LOG_FILE_NAME = '../../p2p_app/logs/log.txt'
 
 OPEN_CONN = []
 
-def parse_list_to_string(input_list):
-    result = ""
-    for sublist in input_list:
-        result += f"NodeA: {sublist[0]}, NodeB: {sublist[1]}, Band: {sublist[2]}\n"
-    return result
-
 def interpret_response(data):
     """
     Function that takes bytes in inputs and return the interpretation of the json
@@ -161,10 +155,11 @@ def remove_node():
     # print(f'NodeID to remove: {node_id}')
     
     ris, msg = send_kill(node_id)
-    if [node_id, _, _] in OPEN_CONN:
-        OPEN_CONN.remove([node_id, _, _])
-    if [_, node_id, _] in OPEN_CONN:
-        OPEN_CONN.remove([_, node_id, _])
+
+    for e in OPEN_CONN:
+        if node_id == e[0] or node_id == e[1]:
+            OPEN_CONN.remove(e)
+            break
 
     generate_graph("./../init/config_files")
     with open(LOG_FILE_NAME, 'r') as file:
@@ -192,7 +187,7 @@ def peer():
 
     if 'ok' in ris:
         OPEN_CONN.append([id_peerA, id_peerB, band])
-    return render_template('peer.html', status=ris, message=msg, oc=parse_list_to_string(OPEN_CONN))
+    return render_template('peer.html', status=ris, message=msg, oc=(OPEN_CONN))
 
 @app.route("/close_conn", methods=['GET', 'POST'])
 def close_conn():
@@ -203,11 +198,11 @@ def close_conn():
     id_peerB = request.form.get('idpb')
 
     ris, msg = close_con(id_peerA, id_peerB)
-    if [id_peerA, id_peerB, _] in OPEN_CONN:
-        OPEN_CONN.remove([id_peerA, id_peerb, _])
-    if [id_peerB, id_peerA, _] in OPEN_CONN:
-        OPEN_CONN.remove([id_peerB, id_peerA, _])
-    return render_template('peer.html', status=ris, message=msg,  oc=parse_list_to_string(OPEN_CONN))
+    for e in OPEN_CONN:
+        if (id_peerA == e[0] and id_peerB == e[1]) or (id_peerA == e[1] and id_peerB == e[0]):
+            OPEN_CONN.remove(e)
+            break
+    return render_template('peer.html', status=ris, message=msg,  oc=(OPEN_CONN))
 
 #----------------------LOG---------------------------------
 @app.route("/log/")

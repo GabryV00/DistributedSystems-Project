@@ -31,9 +31,9 @@
     </form>
     <hr>
     <h1>OPEN CONNECTIONS</h1>
-{%  if oc %}
-    <h1> {{oc}}</h1>
-{%  endif %}
+{% for connection in oc %}
+    <p>peer A: {{connection[0]}} => peer B: {{connection[1]}} ({{connection[2]}})</p><br>
+{% endfor %}
     
 </body> 
 </html>
