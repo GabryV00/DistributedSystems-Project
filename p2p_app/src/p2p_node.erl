@@ -79,10 +79,12 @@ init_node_from_file(FileName) ->
     {no_band, NodeName :: pid()}.
 request_to_communicate(From, To, Band) ->
     case gen_server:call(From, {request_to_communicate, {From, To, Band}}) of
-        {timeout, Pid} ->
-            start_mst_computation(From);
-        {noproc, Pid} ->
-            start_mst_computation(From);
+        {timeout, _} = Reply ->
+            start_mst_computation(From),
+            Reply;
+        {noproc, _} = Reply->
+            start_mst_computation(From),
+            Reply;
         Reply ->
             Reply
     end.
