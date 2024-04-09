@@ -78,7 +78,14 @@ init_node_from_file(FileName) ->
     {noproc, NodeName :: pid()} |
     {no_band, NodeName :: pid()}.
 request_to_communicate(From, To, Band) ->
-    gen_server:call(From, {request_to_communicate, {From, To, Band}}).
+    case gen_server:call(From, {request_to_communicate, {From, To, Band}}) of
+        {timeout, Pid} ->
+            start_mst_computation(From);
+        {noproc, Pid} ->
+            start_mst_computation(From);
+        Reply ->
+            Reply
+    end.
 
 %% @doc Closes the connection for both peers.
 %% This is performed asynchronously, so there is no guarantee that all the
@@ -286,7 +293,6 @@ start_link([Name | _] = Args) ->
 	  ignore.
 init([Name, Adjs, Supervisor]) ->
     process_flag(trap_exit, true),
-    logger:set_module_level(?MODULE, error),
 
     ?LOG_DEBUG("(~p) Starting node with adjs ~p", [Name, Adjs]),
 
@@ -377,8 +383,14 @@ handle_call(start_mst, _From, #state{name = Name,
     % Get a new MST session ID from the Admin, this will be used to compute the MST
     SessionID = get_new_session_id(),
     % Notify neighbors and start to compute the MST
-    start_mst_computation(Name, Adjs, MstAdjs, MstComputer, SessionID),
-    {reply, ok, State#state{current_mst_session = SessionID, mst_state = computing}};
+    {ok, Unreachable} = echo_node_behaviour(Name, Adjs, Adjs, Name, SessionID),
+    MergedAdjs = lists:zip(Adjs, MstAdjs),
+    NewAdjs = Adjs -- Unreachable,
+    {_, NewMstAdjs} = lists:unzip(filter_out(NewAdjs, MergedAdjs)),
+    ?LOG_DEBUG("(~p) echo wave successful, starting MST", [Name]),
+    ?LOG_DEBUG("(~p) MergedAdjs: ~p NewMstAdjs: ~p", [Name, MergedAdjs, NewMstAdjs]),
+    start_mst_computation(Name, NewAdjs, NewMstAdjs, MstComputer, SessionID),
+    {reply, ok, State#state{adjs = NewAdjs, mst_adjs = NewMstAdjs, current_mst_session = SessionID, mst_state = computing}};
 %% Request to communicate from source node perspective
 handle_call({request_to_communicate, {Who, To, Band}} = Req, _From, State) when State#state.mst_state == computed andalso Who == State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
@@ -520,6 +532,8 @@ handle_cast({awake, NameFrom, SessionID} = Req, #state{current_mst_session = Cur
                                    Dst =/= NameFrom
                            end , Adjs),
     % Start to compute the MST using the new SessionID
+    ok = echo_node_behaviour(Name, ToAwake, ToAwake, NameFrom, SessionID),
+    ?LOG_DEBUG("(~p) echo wave successful, starting MST", [Name]),
     start_mst_computation(Name, ToAwake, MstAdjs, MstComputer, SessionID),
     {noreply, State#state{current_mst_session = SessionID, mst_state=computing}};
 handle_cast({close_connection, Who, To} = Req, State) when To /= State#state.name ->
@@ -597,6 +611,23 @@ handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#
                            mst_state = computing},
     dump_config(NewState),
     {noreply, NewState};
+handle_info({token, NameFrom, SessionID}, #state{current_mst_session = CurrentMstSession} = State) when SessionID > CurrentMstSession ->
+    Name = State#state.name,
+    ?LOG_DEBUG("(~p) Received token from ~p", [Name, NameFrom]),
+    Adjs = State#state.adjs,
+    ToAwake = lists:filter(fun(#edge{dst = Dst}) ->
+                                   Dst =/= NameFrom
+                           end , Adjs),
+    MstAdjs = State#state.mst_adjs,
+    MstComputer = State#state.mst_computer_pid,
+    {ok, Unreachable} = echo_node_behaviour(Name, ToAwake, ToAwake, NameFrom, SessionID),
+    MergedAdjs = lists:zip(Adjs, MstAdjs),
+    NewAdjs = Adjs -- Unreachable,
+    {_, NewMstAdjs} = lists:unzip(filter_out(NewAdjs, MergedAdjs)),
+    ?LOG_DEBUG("(~p) echo wave successful, starting MST", [Name]),
+    ?LOG_DEBUG("(~p) MergedAdjs: ~p NewMstAdjs: ~p", [Name, MergedAdjs, NewMstAdjs]),
+    start_mst_computation(Name, NewAdjs, NewMstAdjs, MstComputer, SessionID),
+    {noreply, State#state{adjs = NewAdjs, mst_adjs = NewMstAdjs, current_mst_session = SessionID, mst_state = computing}};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -662,12 +693,12 @@ format_status(_Opt, Status) ->
 %% @param SessionID Is the session of the MST
 %% @end
 start_mst_computation(Name, Adjs, MstAdjs, MstComputerPid, SessionID) ->
-    lists:foreach(fun(#edge{dst = Dst}) ->
-                          ?LOG_DEBUG("~p awakening node ~p", [Name, Dst]),
-                          timer:sleep(10), % introducing latency
-                          gen_server:cast(Dst, {awake, Name, SessionID})
-                  end,
-                  Adjs),
+    % lists:foreach(fun(#edge{dst = Dst}) ->
+    %                       ?LOG_DEBUG("~p awakening node ~p", [Name, Dst]),
+    %                       timer:sleep(10), % introducing latency
+    %                       gen_server:cast(Dst, {awake, Name, SessionID})
+    %               end,
+    %               Adjs),
     MstComputerPid ! {SessionID, {change_adjs, MstAdjs}}.
 
 
@@ -781,9 +812,77 @@ get_connection_handler(SupRef) ->
     {ok, ConnHandler} = p2p_node_sup:start_connection_handler(SupRef),
     ConnHandler.
 
+get_echo_worker(SupRef) ->
+    {ok, EchoWorker} = p2p_node_sup:start_echo_worker(SupRef),
+    EchoWorker.
+
 get_timeout() ->
     admin ! {self(), timer},
     receive
         {admin, Timeout} ->
             Timeout
+    end.
+
+
+
+%% @private
+%% @doc Takes the tuples in L2 such that the first element is in L1.
+%% The lists should be sorted. If A appears before than B in L1 and {A,_}
+%% is in L2 and {B,_} is in L2, then {A,_} should appear before {B,_}.
+%% @param L1 Arbitrary list
+%% @param L2 Proplist
+%% @end
+-spec filter_out(L1 :: list(), L2 :: [{term(), term()}]) -> [{term(), term()}].
+filter_out(L1, L2) ->
+    lists:reverse(filter_out(L1, L2, [])).
+filter_out([], _, Res) ->
+    Res;
+filter_out(_, [], Res) ->
+    Res;
+filter_out([H | T1], [{H, _} = E | T2], Res) ->
+    filter_out(T1, T2, [E | Res]);
+filter_out([H1 | _] = L1, [{H2, _} | T2], Res) when H1 /= H2 ->
+    filter_out(L1, T2, Res).
+
+echo_node_behaviour(Name, AdjsOut, AdjsIn, Parent, SessionID) ->
+    Timeout = get_timeout(),
+    echo_node_behaviour(Name, AdjsOut, AdjsIn, Parent, SessionID, Timeout, []).
+echo_node_behaviour(Name, AdjsOut, AdjsIn, Parent, SessionID, Timeout, Unreachable) ->
+    if 
+        AdjsOut /= [] ->       % first phase: send token out to all adjacent nodes (except parent)
+            Outcomes = lists:map(fun (#edge{dst = P} = Edge) ->
+                                         try
+                                             ?LOG_DEBUG("(~p) awakening ~p~n", [Name, P]),
+                                             P ! {token, Name, SessionID},
+                                             {ok, Edge}
+                                         catch
+                                             error:_ -> {unreachable, Edge}
+                                         end
+                                 end, AdjsOut),
+            NewUnreachable = proplists:get_all_values(unreachable, Outcomes),
+            ?LOG_DEBUG("(~p) Unreachable nodes ~p", [Name, NewUnreachable]),
+            NewAdjsIn = AdjsIn -- NewUnreachable,
+            echo_node_behaviour(Name, [], NewAdjsIn, Parent, SessionID, Timeout, NewUnreachable);
+
+        AdjsIn /= [] ->        % second phase: wait for token back from adjacent nodes
+            receive
+                {token, Child, SessionID} ->
+                    ?LOG_DEBUG("(~p) received token from child ~p~n", [Name, Child]),
+                    EdgeToDelete = lists:keyfind(Child, 2, AdjsIn),
+                    NewAdjsIn = lists:delete(EdgeToDelete, AdjsIn),
+                    echo_node_behaviour(Name, [], NewAdjsIn, Parent, SessionID, Timeout, Unreachable)
+            after Timeout ->
+                  {ok, Unreachable ++ AdjsIn}
+            end;
+
+        true ->                % last phase: report back to parent
+            case Parent == Name of
+                true ->
+                    ?LOG_DEBUG("(~p) Echo wave terminated", [Name]),
+                    {ok, Unreachable};
+                false ->
+                    ?LOG_DEBUG("(~p) sending back to parent ~p~n", [Name, Parent]),
+                    Parent ! {token, Name, SessionID},
+                    {ok, Unreachable}
+            end
     end.
