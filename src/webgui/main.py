@@ -1,4 +1,5 @@
 import os
+import time
 import json
 import socket
 import graphviz
@@ -93,6 +94,9 @@ def generate_graph(PATH):
     """
     Function that generates the graph of the newtork reading the json files
     """
+
+    time.sleep(1) # wait for MST to be computed
+
     if not("static" in os.listdir(".")):
         os.mkdir("./static")
     
@@ -157,7 +161,7 @@ def remove_node():
 
 #----------------------PEER---------------------------------
 
-@app.route("/peer/", methods=['GET', 'POST'])
+@app.route("/peer", methods=['GET', 'POST'])
 def peer():
     if request.method == 'GET':
         return render_template('peer.html')
@@ -174,7 +178,7 @@ def peer():
     ris, msg = open_conn(id_peerA, id_peerB, band)
     return render_template('peer.html', status=ris, message=msg)
 
-@app.route("/close_conn/", methods=['GET', 'POST'])
+@app.route("/close_conn", methods=['GET', 'POST'])
 def close_conn():
     if request.method == 'GET':
         return render_template('peer.html')
