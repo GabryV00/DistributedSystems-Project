@@ -397,34 +397,20 @@ handle_call(start_mst, _From, #state{name = Name,
 handle_call({request_to_communicate, {Who, To, Band}} = Req, _From, State) when State#state.mst_state == computed andalso Who == State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     ConnHandlerPid = get_connection_handler(State#state.supervisor),
-    #edge{dst = NextHop, weight = Weight} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
-    case Weight >= Band of
-        true ->
-            try
-                Timeout = get_timeout(),
-                case gen_server:call(NextHop, {request_to_communicate, {Who, To, Band, ConnHandlerPid}}, Timeout) of
-                    {ok, NextHopConnHandler} ->
-                        p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, Who, To),
-                        CurrentConnections = State#state.connections,
-                        CurrentConnHandlers = State#state.conn_handlers,
-                        NewState = State#state{connections = [{Who, To} | CurrentConnections],
-                                               conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
-                        {reply, {ok, ConnHandlerPid}, NewState};
-                    Reply ->
-                        exit(ConnHandlerPid, normal),
-                        {reply, Reply, State}
-                end
-            catch
-                exit:{timeout, _} ->
-                    exit(ConnHandlerPid, normal),
-                    {reply, {timeout, NextHop}, State};
-                exit:{noproc, _} ->
-                    exit(ConnHandlerPid, normal),
-                    {reply, {noproc, NextHop}, State}
-            end;
-        false ->
-            exit(ConnHandlerPid, normal),
-            {reply, {no_band, {NextHop, Weight}}, State}
+    case maps:get(To, State#state.mst_routing_table, State#state.mst_parent) of
+        #edge{dst = NextHop, weight = Weight} -> ok;
+        none -> Weight = 0, NextHop = none
+    end,
+    Outcome = establish_connection(Who, To, Band, {none, NextHop}, Weight, ConnHandlerPid),
+    case Outcome of
+        {ok, _} ->
+            CurrentConnections = State#state.connections,
+            CurrentConnHandlers = State#state.conn_handlers,
+            NewState = State#state{connections = [{Who, To} | CurrentConnections],
+                                   conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
+            {reply, {ok, ConnHandlerPid}, NewState};
+        _ ->
+            {reply, Outcome, State}
     end;
 %% Request to communicate from destination node perspective
 handle_call({request_to_communicate, {Who, To, _Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To == State#state.name ->
@@ -441,34 +427,20 @@ handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, Sta
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     ConnHandlerPid = get_connection_handler(State#state.supervisor),
     % TODO: manage parent = none and no next hop
-    #edge{dst = NextHop, weight = Weight} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
-    case Weight >= Band of
-        true ->
-            try
-                Timeout = get_timeout(),
-                case gen_server:call(NextHop, {request_to_communicate, {Who, To, Band, ConnHandlerPid}}, Timeout) of
-                    {ok, NextHopConnHandler} ->
-                        p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, LastHop, Who, To),
-                        CurrentConnections = State#state.connections,
-                        CurrentConnHandlers = State#state.conn_handlers,
-                        NewState = State#state{connections = [{Who, To} | CurrentConnections],
-                                               conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
-                        {reply, {ok, ConnHandlerPid}, NewState};
-                    Reply ->
-                        exit(ConnHandlerPid, normal),
-                        {reply, Reply, State}
-                end
-            catch
-                exit:{timeout, _} ->
-                    exit(ConnHandlerPid, normal),
-                    {reply, {timeout, NextHop}, State};
-                exit:{noproc, _} ->
-                    exit(ConnHandlerPid, normal),
-                    {reply, {noproc, NextHop}, State}
-            end;
-        false ->
-            exit(ConnHandlerPid, normal),
-            {reply, {no_band, {NextHop, Weight}}, State}
+    case maps:get(To, State#state.mst_routing_table, State#state.mst_parent) of
+        #edge{dst = NextHop, weight = Weight} -> ok;
+        none -> Weight = 0, NextHop = none
+    end,
+    Outcome = establish_connection(Who, To, Band, {LastHop, NextHop}, Weight, ConnHandlerPid),
+    case Outcome of
+        {ok, _} ->
+                CurrentConnections = State#state.connections,
+                CurrentConnHandlers = State#state.conn_handlers,
+                NewState = State#state{connections = [{Who, To} | CurrentConnections],
+                                       conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
+                {reply, {ok, ConnHandlerPid}, NewState};
+        _ ->
+            {reply, Outcome, State}
     end;
 %% Request to communicate when MST is not computed from node's perspective
 handle_call({request_to_communicate,  _} = Req, _From, State) when State#state.mst_state /= computed ->
@@ -887,4 +859,36 @@ echo_node_behaviour(Name, AdjsOut, AdjsIn, Parent, SessionID, Timeout, Unreachab
                     Parent ! {token, Name, SessionID},
                     {ok, Unreachable}
             end
+    end.
+
+
+
+establish_connection(_Who, To, _Band, {_, none}, _Weight, ConnHandlerPid) ->
+    exit(ConnHandlerPid, normal),
+    {no_route, To};
+establish_connection(_, _, Band, {_, NextHop}, Weight, ConnHandlerPid) when Weight < Band ->
+    exit(ConnHandlerPid, normal),
+    {no_band, {NextHop, Weight}};
+establish_connection(Who, To, Band, {LastHop, NextHop}, Weight, ConnHandlerPid) when Weight >= Band andalso NextHop /= none ->
+    try
+        Timeout = get_timeout(),
+        case gen_server:call(NextHop, {request_to_communicate, {Who, To, Band, ConnHandlerPid}}, Timeout) of
+            {ok, NextHopConnHandler} ->
+                case LastHop of
+                    none ->
+                        p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, Who, To);
+                    _ ->
+                        p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, LastHop, Who, To)
+                end;
+            Reply ->
+                exit(ConnHandlerPid, normal),
+                Reply
+        end
+    catch
+        exit:{timeout, _} ->
+            exit(ConnHandlerPid, normal),
+            {timeout, NextHop};
+        exit:{noproc, _} ->
+            exit(ConnHandlerPid, normal),
+            {noproc, NextHop}
     end.
