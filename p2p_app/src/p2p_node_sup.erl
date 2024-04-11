@@ -1,8 +1,7 @@
 %%%-------------------------------------------------------------------
-%%% @author  <gianluca>
-%%% @copyright (C) 2024,
-%%% @doc
-%%%
+%%% @author Gianluca Zavan
+%%% @doc Implements the supervisor of the peer core logic process, the MST
+%%% computer and the connection handler supervisor.
 %%% @end
 %%% Created: 24 March 2024
 %%%-------------------------------------------------------------------

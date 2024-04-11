@@ -1,3 +1,9 @@
+%%%-------------------------------------------------------------------
+%%% @author Gianluca Zavan
+%%% @doc Implements the admin functions.
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(p2p_admin).
 
 -export([start_link/1, spawn_node/2]).
@@ -31,14 +37,13 @@ spawn_node(Name, Adjs) ->
 %% @private
 %% @doc Admin node initialization
 %% @end
-init(Supervisor) ->
+init(_Supervisor) ->
     logger:set_module_level(?MODULE, debug),
     asynch_write:init(?EVENTS_FILENAME, "[\n  ", ",\n  ", "\n]"),
     events:init(ghs),
     latency:init(),
 
     loop(1),
-
 
     latency:stop(),
     events:stop(),
@@ -64,11 +69,13 @@ loop(Counter) ->
 %% @private
 %% @doc Computes the total number of peers in the network
 %% @end
+-spec get_peer_count() -> non_neg_integer().
 get_peer_count() ->
     proplists:get_value(active, supervisor:count_children(p2p_node_manager)).
 
 %% @doc Computes the timeout value to give to a peer based on network dimesion
 %% @param N The number of peers in the network
 %% @end
+-spec compute_timer_duration(N :: non_neg_integer()) -> number().
 compute_timer_duration(N) ->
     N * 1000.

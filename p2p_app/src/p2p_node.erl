@@ -1,8 +1,6 @@
 %%%-------------------------------------------------------------------
-%%% @author  <gianluca>
-%%% @copyright (C) 2024,
-%%% @doc
-%%%
+%%% @author Gianluca Zavan
+%%% @doc Implements the core peer logic.
 %%% @end
 %%% Created: 24 March 2024
 %%%-------------------------------------------------------------------
@@ -78,15 +76,26 @@ init_node_from_file(FileName) ->
     {noproc, NodeName :: pid()} |
     {no_band, NodeName :: pid()}.
 request_to_communicate(From, To, Band) ->
-    case gen_server:call(From, {request_to_communicate, {From, To, Band}}) of
-        {timeout, _} = Reply ->
-            start_mst_computation(From),
-            Reply;
-        {noproc, _} = Reply->
-            start_mst_computation(From),
-            Reply;
-        Reply ->
-            Reply
+    try
+        case gen_server:call(From, {request_to_communicate, {From, To, Band}}) of
+            {timeout, _} = Reply ->
+                start_mst_computation(From),
+                Reply;
+            {noproc, _} = Reply->
+                start_mst_computation(From),
+                Reply;
+            Reply ->
+                Reply
+        end
+    catch
+        exit:{timeout, _Location} ->
+            ?LOG_ERROR("Request to communicate to ~p timed out", [From]),
+            {timeout, From};
+        exit:{noproc, _Location} ->
+            {noproc, From};
+        exit:{shutdown, _Location} ->
+            ?LOG_ERROR("The peer ~p was stopped during the call by its supervisor", [From]),
+            {shutdown, From}
     end.
 
 %% @doc Closes the connection for both peers.
@@ -216,7 +225,7 @@ leave_network(Ref) ->
     {shutdown, Ref :: pid()}.
 join_network(Ref, Adjs) when is_atom(Ref) ->
     try
-        validate_edges(Ref, Adjs),
+        true = validate_edges(Ref, Adjs),
         Reply = gen_server:call(Ref, {join, Adjs}),
         case Reply of
             ok -> ok;
@@ -308,7 +317,6 @@ init([Name, Adjs, Supervisor]) ->
           mst_computer_pid = undefined
          },
 
-    % dump_config(State),
     {ok, State}.
 
 %%--------------------------------------------------------------------
@@ -355,7 +363,7 @@ handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
     Supervisor = State#state.supervisor,
     % Get a process to compute the MST, if it doesn't already exist
     MstComputer = get_mst_worker(Name, Pid, Supervisor),
-
+    % Add the PID of the MST computer to the MST neighbor list
     case lists:keyfind(MstPid, 2, MstAdjs) of
          false ->
             NewMstAdjs = [#edge{src = MstComputer, dst = MstPid, weight = Weight} | MstAdjs];
@@ -363,6 +371,7 @@ handle_call({new_neighbor, NeighborName, Weight, MstPid} = Req, _NodeFrom,
             NewMstAdjs = MstAdjs
     end,
 
+    % Add the name of the peer to the neighbor list
     case lists:keyfind(NeighborName, 2, Adjs) of
          false ->
             NewAdjs = [#edge{src = Name, dst = NeighborName, weight = Weight} | Adjs];
@@ -384,53 +393,69 @@ handle_call(start_mst, _From, #state{name = Name,
                                      mst_computer_pid = MstComputer} = State) ->
     % Get a new MST session ID from the Admin, this will be used to compute the MST
     SessionID = get_new_session_id(),
-    % Notify neighbors and start to compute the MST
+    % Start the echo wave to inform other peers of new MST computation
     {ok, Unreachable} = echo_node_behaviour(Name, Adjs, Adjs, Name, SessionID),
+    % Update the neighbor list by removing who didn't answer during the echo wave
     MergedAdjs = lists:zip(Adjs, MstAdjs),
     NewAdjs = Adjs -- Unreachable,
     {_, NewMstAdjs} = lists:unzip(filter_out(NewAdjs, MergedAdjs)),
     ?LOG_DEBUG("(~p) echo wave successful, starting MST", [Name]),
-    ?LOG_DEBUG("(~p) MergedAdjs: ~p NewMstAdjs: ~p", [Name, MergedAdjs, NewMstAdjs]),
+    % Start the actual MST computation now that everyone else knows about it
     start_mst_computation(Name, NewAdjs, NewMstAdjs, MstComputer, SessionID),
-    {reply, ok, State#state{adjs = NewAdjs, mst_adjs = NewMstAdjs, current_mst_session = SessionID, mst_state = computing}};
-%% Request to communicate from source node perspective
+    NewState = State#state{adjs = NewAdjs,
+                           mst_adjs = NewMstAdjs,
+                           current_mst_session = SessionID,
+                           mst_state = computing},
+    {reply, ok, NewState};
+%% Request to communicate from source node perspective when MST has been computed
 handle_call({request_to_communicate, {Who, To, Band}} = Req, _From, State) when State#state.mst_state == computed andalso Who == State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    % Get a fresh connection handler
     ConnHandlerPid = get_connection_handler(State#state.supervisor),
+    % Check if there is a way to route the request to communicate
     case maps:get(To, State#state.mst_routing_table, State#state.mst_parent) of
         #edge{dst = NextHop, weight = Weight} -> ok;
         none -> Weight = 0, NextHop = none
     end,
+    % Try to establish a connection along the path on the MST towards `To'
     Outcome = establish_connection(Who, To, Band, {none, NextHop}, Weight, ConnHandlerPid),
     case Outcome of
+        % The connection has been established
         {ok, _} ->
             CurrentConnections = State#state.connections,
             CurrentConnHandlers = State#state.conn_handlers,
             NewState = State#state{connections = [{Who, To} | CurrentConnections],
+                                   % Use the connection handler to send and receive messages
                                    conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
             {reply, {ok, ConnHandlerPid}, NewState};
+        % Something went wrong on the path towards `To'
         _ ->
             {reply, Outcome, State}
     end;
 %% Request to communicate from destination node perspective
 handle_call({request_to_communicate, {Who, To, _Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To == State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    % Get a fresh connection handler
     ConnHandlerPid = get_connection_handler(State#state.supervisor),
+    % Tell the connection handler where to forward data, and where it's coming from
     p2p_conn_handler:talk_to(ConnHandlerPid, LastHop, Who, To),
     CurrentConnections = State#state.connections,
     CurrentConnHandlers = State#state.conn_handlers,
     NewState = State#state{connections = [{Who, To} | CurrentConnections],
+                           % Use the connection handler to send and receive messages
                            conn_handlers = CurrentConnHandlers#{{Who, To} => ConnHandlerPid, {To, Who} => ConnHandlerPid}},
     {reply, {ok, ConnHandlerPid}, NewState};
 %% Request to communicate from intermediate node perspective
 handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, State) when State#state.mst_state == computed andalso To /= State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    % Get a fresh connection handler
     ConnHandlerPid = get_connection_handler(State#state.supervisor),
-    % TODO: manage parent = none and no next hop
+    % Check if there is a way to route the request to communicate
     case maps:get(To, State#state.mst_routing_table, State#state.mst_parent) of
         #edge{dst = NextHop, weight = Weight} -> ok;
         none -> Weight = 0, NextHop = none
     end,
+    % Forward the request to communicate message along the path towards `To'
     Outcome = establish_connection(Who, To, Band, {LastHop, NextHop}, Weight, ConnHandlerPid),
     case Outcome of
         {ok, _} ->
@@ -446,30 +471,38 @@ handle_call({request_to_communicate, {Who, To, Band, LastHop}} = Req, _From, Sta
 handle_call({request_to_communicate,  _} = Req, _From, State) when State#state.mst_state /= computed ->
     ?LOG_DEBUG("(~p) got (call) ~p but no info on MST", [State#state.name, Req]),
     {reply, {no_mst, State#state.name}, State};
+%% Peer has to close the connection towards `To'
 handle_call({close_connection, To} = Req, _From, State) ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     Who = State#state.name,
     CurrentConnections = State#state.connections,
     CurrentConnHandlers = State#state.conn_handlers,
+    % Remove the connection handler references
     NewState = State#state{connections = CurrentConnections -- [{Who, To}],
                            conn_handlers = maps:remove({Who, To},
                                                maps:remove({To, Who}, CurrentConnHandlers))},
     try
+        % Kill the specific connection handler
         exit(maps:get({State#state.name, To}, State#state.conn_handlers), normal),
         #edge{dst = NextHop} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
+        % Send an asynchronous request to the next hop
         gen_server:cast(NextHop, {close_connection, Who, To}),
         {reply, ok, NewState}
     catch
         error:_ -> {reply, ok, NewState} % the process already terminated for some reason
     end;
+%% Peer leaves the network
 handle_call(leave = Req, _From, State) ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     Reason = normal,
     Reply = ok,
     {stop, Reason, Reply, State};
+%% Peer wants to send data to peer `To'
 handle_call({send_data, From, To, Data}, _, State) ->
+    % Check if there exist an open connection with `To'
     case maps:find({From, To}, State#state.conn_handlers) of
         {ok, ConnHandlerPid} ->
+            % Use the specific connecion handler
             p2p_conn_handler:send_data(ConnHandlerPid, Data),
             {reply, ok, State};
         error ->
@@ -491,25 +524,7 @@ handle_call(Request, _From, State) ->
 	  {noreply, NewState :: term(), Timeout :: timeout()} |
 	  {noreply, NewState :: term(), hibernate} |
 	  {stop, Reason :: term(), NewState :: term()}.
-%% When this message is received, someone wants to start computing the MST
-%% The request is only considered if it comes from someone with a greater SessionID
-%% than the one known by the node
-handle_cast({awake, NameFrom, SessionID} = Req, #state{current_mst_session = CurrentMstSession} = State) when SessionID > CurrentMstSession ->
-    ?LOG_DEBUG("(~p) got (cast) ~p", [State#state.name, Req]),
-    Name = State#state.name,
-    Adjs = State#state.adjs,
-    MstComputer = State#state.mst_computer_pid,
-    MstAdjs = State#state.mst_adjs,
-    % Awake all neighbors informing them of the new SessionID (not the one from
-    % which the message came from)
-    ToAwake = lists:filter(fun(#edge{dst = Dst}) ->
-                                   Dst =/= NameFrom
-                           end , Adjs),
-    % Start to compute the MST using the new SessionID
-    ok = echo_node_behaviour(Name, ToAwake, ToAwake, NameFrom, SessionID),
-    ?LOG_DEBUG("(~p) echo wave successful, starting MST", [Name]),
-    start_mst_computation(Name, ToAwake, MstAdjs, MstComputer, SessionID),
-    {noreply, State#state{current_mst_session = SessionID, mst_state=computing}};
+%% A peer along the path to `To' decided to close the connection and sent an async request
 handle_cast({close_connection, Who, To} = Req, State) when To /= State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
     CurrentConnections = State#state.connections,
@@ -518,13 +533,16 @@ handle_cast({close_connection, Who, To} = Req, State) when To /= State#state.nam
                            conn_handlers = maps:remove({Who, To},
                                                        maps:remove({To, Who}, CurrentConnHandlers))},
     try
+        % Kill the specific connection handler
         exit(maps:get({Who, To}, State#state.conn_handlers), normal),
         #edge{dst = NextHop} = maps:get(To, State#state.mst_routing_table, State#state.mst_parent),
+        % Forward the request
         gen_server:cast(NextHop, {close_connection, Who, To}),
         {noreply, NewState}
     catch
         error:_ -> {noreply, NewState} % the process already terminated for some reason
     end;
+%% The request arrived to destination
 handle_cast({close_connection, Who, To} = Req, State) when To == State#state.name ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
         CurrentConnections = State#state.connections,
@@ -533,13 +551,14 @@ handle_cast({close_connection, Who, To} = Req, State) when To == State#state.nam
                                conn_handlers = maps:remove({Who, To},
                                                    maps:remove({To, Who}, CurrentConnHandlers))},
     try
+        % Kill the specific connection handler
         exit(maps:get({Who, To}, State#state.conn_handlers), normal),
         {noreply, NewState}
     catch
         error:_ -> {noreply, NewState} % the process already terminated for some reason
     end;
-handle_cast(_Request, State) ->
-    % ?LOG_DEBUG("(~p) got (cast) ~p, not managed", [State#state.name, Request]),
+handle_cast(Request, State) ->
+    ?LOG_DEBUG("(~p) got (cast) ~p, not managed", [State#state.name, Request]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -553,20 +572,25 @@ handle_cast(_Request, State) ->
 	  {noreply, NewState :: term(), Timeout :: timeout()} |
 	  {noreply, NewState :: term(), hibernate} |
 	  {stop, Reason :: normal | term(), NewState :: term()}.
+%% The MST computer finished its task in the algorithm and reports its MST edges
 handle_info({done, {SessionID, MstParent, MstRoutingTable}} = Msg, State) when SessionID >= State#state.current_mst_session ->
     ?LOG_DEBUG("(~p) got ~p from my MST computer", [State#state.name, Msg]),
+    % Update the peer's state because now the MST has been computed
     NewState = State#state{current_mst_session = SessionID,
                            mst_state = computed,
                            mst_parent = MstParent,
                            mst_routing_table = MstRoutingTable},
+    % Change the configuration file
     dump_config(NewState),
     {noreply, NewState};
+%% The MST computer detected an unreachable peer
 handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#state.current_mst_session ->
     ?LOG_DEBUG("(~p) got ~p from my MST computer", [State#state.name, Msg]),
     MstAdjs = State#state.mst_adjs,
     Adjs = State#state.adjs,
     MstEdgeToDelete = lists:keyfind(Who, 2, MstAdjs),
 
+    % Delete the appropriate edge towards the unreachable peer
     case lists:keyfind(MstEdgeToDelete, 1, lists:zip(MstAdjs, Adjs)) of
         {_, EdgeToDelete} ->
             NewAdjs = lists:delete(EdgeToDelete, Adjs),
@@ -577,7 +601,12 @@ handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#
             NewMstAdjs = MstAdjs
     end,
 
+    % Get a fresh session ID to start a new MST computation
     NewSessionID = get_new_session_id(),
+    Name = State#state.name,
+    % Start a new echo wave to inform other peers
+    echo_node_behaviour(Name, NewAdjs, NewAdjs, Name, NewSessionID),
+    % Start a new MST computation with the new neighbor list
     start_mst_computation(State#state.name, NewAdjs, NewMstAdjs, State#state.mst_computer_pid, NewSessionID),
     NewState = State#state{adjs = NewAdjs,
                            mst_adjs = NewMstAdjs,
@@ -585,21 +614,25 @@ handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#
                            mst_state = computing},
     dump_config(NewState),
     {noreply, NewState};
-handle_info({token, NameFrom, SessionID}, #state{current_mst_session = CurrentMstSession} = State) when SessionID > CurrentMstSession ->
+%% Received by a peer when another one started an echo wave
+handle_info({awake, NameFrom, SessionID}, #state{current_mst_session = CurrentMstSession} = State) when SessionID > CurrentMstSession ->
     Name = State#state.name,
     ?LOG_DEBUG("(~p) Received token from ~p", [Name, NameFrom]),
     Adjs = State#state.adjs,
+    % Filter out the peer who sent the awake message
     ToAwake = lists:filter(fun(#edge{dst = Dst}) ->
                                    Dst =/= NameFrom
                            end , Adjs),
     MstAdjs = State#state.mst_adjs,
     MstComputer = State#state.mst_computer_pid,
+    % Participate in the echo wave
     {ok, Unreachable} = echo_node_behaviour(Name, ToAwake, ToAwake, NameFrom, SessionID),
+    % Filter out the peers who didn't answer during the echo wave
     MergedAdjs = lists:zip(Adjs, MstAdjs),
     NewAdjs = Adjs -- Unreachable,
     {_, NewMstAdjs} = lists:unzip(filter_out(NewAdjs, MergedAdjs)),
     ?LOG_DEBUG("(~p) echo wave successful, starting MST", [Name]),
-    ?LOG_DEBUG("(~p) MergedAdjs: ~p NewMstAdjs: ~p", [Name, MergedAdjs, NewMstAdjs]),
+    % Start the MST computation
     start_mst_computation(Name, NewAdjs, NewMstAdjs, MstComputer, SessionID),
     {noreply, State#state{adjs = NewAdjs, mst_adjs = NewMstAdjs, current_mst_session = SessionID, mst_state = computing}};
 handle_info(_Info, State) ->
@@ -618,13 +651,13 @@ handle_info(_Info, State) ->
 		State :: term()) -> any().
 terminate(_Reason, State) ->
     Id = extract_id(State#state.name),
+    % Delete the peer's config file
     file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
-    % dump_termination(Id),
     try
         exit(State#state.mst_computer_pid, kill),
         maps:foreach(fun(_ConnId, ConnHandler) -> exit(ConnHandler, kill) end, State#state.conn_handlers)
     catch
-        error:_ -> ok % Mst process is already dead...
+        error:_ -> ok % Mst process is already dead for some reason, it's ok
     end,
     ok.
 
@@ -666,13 +699,7 @@ format_status(_Opt, Status) ->
 %% @param MstComputerPid Is the pid of the process managing the MST of the node Name
 %% @param SessionID Is the session of the MST
 %% @end
-start_mst_computation(Name, Adjs, MstAdjs, MstComputerPid, SessionID) ->
-    % lists:foreach(fun(#edge{dst = Dst}) ->
-    %                       ?LOG_DEBUG("~p awakening node ~p", [Name, Dst]),
-    %                       timer:sleep(10), % introducing latency
-    %                       gen_server:cast(Dst, {awake, Name, SessionID})
-    %               end,
-    %               Adjs),
+start_mst_computation(_Name, _Adjs, MstAdjs, MstComputerPid, SessionID) ->
     MstComputerPid ! {SessionID, {change_adjs, MstAdjs}}.
 
 
@@ -717,19 +744,20 @@ get_mst_info(MstComputer) ->
             Info
     end.
 
-dump_termination(Id) ->
-    FileName = ?CONFIG_DIR ++ "node_" ++ Id ++ ".json",
-    {ok, Data} = file:read_file(FileName),
-    Json = jsone:decode(Data),
-    NewData = Json#{<<"state">> => <<"terminated">>},
-    file:write_file(FileName, jsone:encode(NewData)).
 
+%% @private
+%% @doc Change the JSON config file based on peer's state.
+%% @param State The raw state of the peer
+%% @end
 dump_config(State) ->
+    % Get the peer's numerical ID
     [_ , Id] = extract_id(State#state.name),
+    % Transform the peer's edges in the appropriate format, which is [[NeighborID :: integer(), Weight :: integer()]]
     Edges = lists:map(fun(#edge{dst = Dst, weight = Weight}) ->
                             [_, DstId] = extract_id(Dst),
                             [list_to_integer(DstId), Weight]
                       end, State#state.adjs),
+    % Check if there is a (unique) edge that is part of the MST sink tree
     case State#state.mst_parent of
         #edge{dst = Parent, weight = Weight} ->
             [_, ParentId] = extract_id(Parent),
@@ -737,6 +765,7 @@ dump_config(State) ->
         none ->
             ParentEdge = []
     end,
+    % Get all the unique edges that are part of the MST
     Mst = lists:uniq(
                     lists:map(fun({_Pid, #edge{dst = Dst, weight = Weight}}) ->
                                       [_, DstId] = extract_id(Dst),
@@ -744,33 +773,54 @@ dump_config(State) ->
                               end,
                               maps:to_list(State#state.mst_routing_table)
                              )
+                    % Include the parent edge previously extracted
                     ++ ParentEdge
                    ),
+    % Encode everyting in JSON
     Json = jsone:encode(#{<<"id">> => list_to_bitstring(Id),
                           <<"edges">> => Edges,
                           <<"mst">> => Mst}),
-
+    % Save the file
     file:write_file(?CONFIG_DIR ++ "node_" ++ Id ++ ".json", Json).
 
 
+%% @private
+%% @doc Extract the numerical ID of the peer from it's name (kinda wonky).
+%% @param Name The name of the peer (atom)
+%% @end
 extract_id(Name) ->
     string:split(atom_to_list(Name), "node").
 
 
-validate_edges(Ref, Edges) ->
+%% @private
+%% @doc Check that all the edges have `Name' as source, have a non-negative weight and don't cause self-loops.
+%% @param Name The name of the peer
+%% @param Edges List of #edge records
+%% @return `true' if all the edges pass the checks, `false' otherwise
+%% @throws edges_not_valid
+%% @end
+validate_edges(Name, Edges) ->
     try
         lists:all(fun(#edge{src = Src, dst = Dst, weight = Weight}) ->
                       (is_atom(Src) or is_pid(Src)) andalso
                       (is_atom(Dst) or is_pid(Dst)) andalso
                       is_number(Weight) andalso Weight > 0 andalso
-                      Src == Ref andalso Dst /= Ref
-                  end , Edges),
-        ok
+                      Src == Name andalso Dst /= Name
+                  end , Edges)
     catch
         _ -> throw(edges_not_valid)
     end.
 
-
+%% @private
+%% @doc Send the appropriate requests to the peers in `Adjs' to get their MST computer pid.
+%% @param Adjs List of #edge records
+%% @param Name The peer's name
+%% @param MstComputer The pid of the MstComputer of `Name'
+%% @return A list of tuples, each of which can be: `{ok, #edge{src=MstComputer,
+%%  dst=NeighborMstPid, weight=Weight}}' if the neighbor answered with its MST
+%%  computer pid, `{timeout, Dst}' if neighbor `Dst' didn't answer in the given
+%%  time frame and `{noproc, Dst}' if `Dst' is dead
+%% @end
 get_neighbors_mst_pid(Adjs, Name, MstComputer) ->
     lists:map(fun(#edge{dst = Dst, weight = Weight}) ->
                       try
@@ -782,14 +832,19 @@ get_neighbors_mst_pid(Adjs, Name, MstComputer) ->
                       end
               end, Adjs).
 
+%% @private
+%% @doc Asks the peer's supervisor to spawn and supervise a new connection handler process
+%% @param SupRef The pid of the supervisor
+%% @returns The pid of the connection handler
+%% @end
 get_connection_handler(SupRef) ->
     {ok, ConnHandler} = p2p_node_sup:start_connection_handler(SupRef),
     ConnHandler.
 
-get_echo_worker(SupRef) ->
-    {ok, EchoWorker} = p2p_node_sup:start_echo_worker(SupRef),
-    EchoWorker.
-
+%% @private
+%% @doc Asks to the admin for an appropriate timeout value in milliseconds based on the number of peers in the network.
+%% @return The number of milliseconds to use as timeout
+%% @end
 get_timeout() ->
     admin ! {self(), timer},
     receive
@@ -818,30 +873,39 @@ filter_out([H | T1], [{H, _} = E | T2], Res) ->
 filter_out([H1 | _] = L1, [{H2, _} | T2], Res) when H1 /= H2 ->
     filter_out(L1, T2, Res).
 
+
+%% @private
+%% @doc Implements the operations to perfom during a echo wave
+%% @param Name Is the name of the peer participating in the wave
+%% @param AdjsOut Is the list of edges towards the children peers
+%% @param AdjsIn Is the list of the edges from which the peer expects to receive the token back
+%% @param Parent Is the Name of the peer from which the echo request came from
+%% @param SessionID Is the ID of the MST session that caused the echo wave
+%% @end
 echo_node_behaviour(Name, AdjsOut, AdjsIn, Parent, SessionID) ->
     Timeout = get_timeout(),
     echo_node_behaviour(Name, AdjsOut, AdjsIn, Parent, SessionID, Timeout, []).
 echo_node_behaviour(Name, AdjsOut, AdjsIn, Parent, SessionID, Timeout, Unreachable) ->
-    if 
+    if
         AdjsOut /= [] ->       % first phase: send token out to all adjacent nodes (except parent)
             Outcomes = lists:map(fun (#edge{dst = P} = Edge) ->
                                          try
-                                             ?LOG_DEBUG("(~p) awakening ~p~n", [Name, P]),
-                                             P ! {token, Name, SessionID},
+                                             % ?LOG_DEBUG("(~p) awakening ~p~n", [Name, P]),
+                                             P ! {awake, Name, SessionID},
                                              {ok, Edge}
                                          catch
                                              error:_ -> {unreachable, Edge}
                                          end
                                  end, AdjsOut),
             NewUnreachable = proplists:get_all_values(unreachable, Outcomes),
-            ?LOG_DEBUG("(~p) Unreachable nodes ~p", [Name, NewUnreachable]),
+            % ?LOG_DEBUG("(~p) Unreachable nodes ~p", [Name, NewUnreachable]),
             NewAdjsIn = AdjsIn -- NewUnreachable,
             echo_node_behaviour(Name, [], NewAdjsIn, Parent, SessionID, Timeout, NewUnreachable);
 
         AdjsIn /= [] ->        % second phase: wait for token back from adjacent nodes
             receive
-                {token, Child, SessionID} ->
-                    ?LOG_DEBUG("(~p) received token from child ~p~n", [Name, Child]),
+                {awake, Child, SessionID} ->
+                    % ?LOG_DEBUG("(~p) received token from child ~p~n", [Name, Child]),
                     EdgeToDelete = lists:keyfind(Child, 2, AdjsIn),
                     NewAdjsIn = lists:delete(EdgeToDelete, AdjsIn),
                     echo_node_behaviour(Name, [], NewAdjsIn, Parent, SessionID, Timeout, Unreachable)
@@ -852,17 +916,33 @@ echo_node_behaviour(Name, AdjsOut, AdjsIn, Parent, SessionID, Timeout, Unreachab
         true ->                % last phase: report back to parent
             case Parent == Name of
                 true ->
-                    ?LOG_DEBUG("(~p) Echo wave terminated", [Name]),
+                    % ?LOG_DEBUG("(~p) Echo wave terminated", [Name]),
                     {ok, Unreachable};
                 false ->
-                    ?LOG_DEBUG("(~p) sending back to parent ~p~n", [Name, Parent]),
-                    Parent ! {token, Name, SessionID},
+                    % ?LOG_DEBUG("(~p) sending back to parent ~p~n", [Name, Parent]),
+                    Parent ! {awake, Name, SessionID},
                     {ok, Unreachable}
             end
     end.
 
 
-
+%% @private
+%% @doc Perform the needed operations to send the request to communicate along the path on the MST
+%% @param Who The source of the communication request (could be another peer)
+%% @param To The destination of the communication request
+%% @param Band The bandwidth requested for the communication
+%% @param {LastHop, NextHop} LastHop is the connection handler pid to contact
+%%  to forward the data towards `Who', and can be `none' in case the function
+%%  is called by the source peer. `NextHop' is the connection handler pid to
+%%  contact to forward the data towards 'To`, and can be none in case there is
+%%  no route to reach `To'.
+%% @param Weight Is the weight of the edge connecting the peer to the next one on the path
+%% @param ConnHandlerPid Is the connection handler pid of the peer calling the function
+%% @return `{no_route, To}' if there is no way to reach `To' (could be because of network partitioning)
+%%   `{no_band, To}' if an edge on the path towards `To' has a weight strictly less than `Band', so the request is unsatisfiable
+%%   `{timeout, Name}' if `Name' on the path didn't send back its connection handler pid in time
+%%   `{noproc, Name}' if `Name' on the path is dead
+%% @end
 establish_connection(_Who, To, _Band, {_, none}, _Weight, ConnHandlerPid) ->
     exit(ConnHandlerPid, normal),
     {no_route, To};
@@ -876,9 +956,11 @@ establish_connection(Who, To, Band, {LastHop, NextHop}, Weight, ConnHandlerPid) 
             {ok, NextHopConnHandler} ->
                 case LastHop of
                     none ->
-                        p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, Who, To);
+                        p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, Who, To),
+                        {ok, ConnHandlerPid};
                     _ ->
-                        p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, LastHop, Who, To)
+                        p2p_conn_handler:talk_to(ConnHandlerPid, NextHopConnHandler, LastHop, Who, To),
+                        {ok, ConnHandlerPid}
                 end;
             Reply ->
                 exit(ConnHandlerPid, normal),

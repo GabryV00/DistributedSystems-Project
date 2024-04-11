@@ -1,3 +1,9 @@
+%%%-------------------------------------------------------------------
+%%% @author Gianluca Zavan
+%%% @doc Application entrypoint.
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(p2p).
 
 -export([main/1]).
@@ -23,14 +29,13 @@ main(Args) ->
                     short => $i,
                     long => "init",
                     type => string,
-                    default => "config_files"
+                    default => "../src/init/config_files"
                 }
 
             ]
         }),
 
 
-    logger:set_module_level(?MODULE, debug),
     Config = #{
         config => #{
             file => ?LOG_FILENAME,
@@ -51,6 +56,16 @@ main(Args) ->
     },
     logger:add_handler(to_file_handler, logger_std_h, Config),
     logger:set_handler_config(default, level, notice),
+
+
+    if
+        Verbose ->
+            % Set main modules to debug mode
+            logger:set_module_level(?MODULE, debug),
+            logger:set_module_level(p2p_node, debug),
+            logger:set_module_level(ghs, debug);
+        true -> ok
+    end,
 
     ?LOG_DEBUG("initdir ~p", [InitDir]),
 
@@ -78,6 +93,7 @@ start(InitDir) ->
     p2p_admin_sup:start_link(),
     p2p_node_manager:start_link(),
     utils:init_network(InitDir),
+    io:format("=== NETWORK INIT COMPLETED, NOW LISTENING ===~n"),
     loop().
 
 loop() -> loop().

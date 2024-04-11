@@ -1,3 +1,10 @@
+%%%-------------------------------------------------------------------
+%%% @author Gabriele Puppis
+%%% @author Gianluca Zavan
+%%% @doc Implements the GHS algorithm to compute the MST.
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(ghs).
 
 -behaviour(events).
@@ -45,7 +52,6 @@
 
 
 start_link(Name) ->
-    logger:set_module_level(?MODULE, debug),
     Pid = spawn_link(fun() -> node_start(Name, Name) end),
     {ok, Pid}.
 
@@ -216,7 +222,40 @@ node_loop(Node, State, Component) ->
                      mst_session = SessionID},
               #component{level = 0, core = self()}
              );
-        {{_NameFrom, _PidFrom, _AckTo, _Ref, {SessionID, _}}, _Annot} = Msg ->
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {SessionID, _}}, _Annot} = Msg when SessionID > State#state.mst_session ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {SessionID, _}}, _Annot} = Msg when SessionID < State#state.mst_session ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, {test, _Source_Id, Source_Component}}}, _} = Msg when Component#component.level >= Source_Component#component.level ->
+            handle_mst_message(Msg, Node, State, Component);
+        % {{_NameFrom, _PidFrom, AckTo, Ref, {_SessionID, {test, _Source_Id, Source_Component}}}, _} = Msg when Component#component.level < Source_Component#component.level ->
+        %     % self() ! Msg,
+        %     ?LOG_DEBUG("postponed ~p~n", [Msg]),
+        %     send_ack(self(), AckTo, Ref),
+        %     node_loop(Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, accept}}, _} = Msg ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, reject}}, _} = Msg ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, {report, _Candidate}}}, _} = Msg ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, notify}}, _} = Msg ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, {merge, _Source_Id, Source_Level}}}, _} = Msg when Component#component.level > Source_Level ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, {merge, Source_Id, Source_Level}}}, _} = Msg when Component#component.level == Source_Level andalso
+                                                                                                        State#state.selected andalso
+                                                                                                        State#state.candidate#candidate.edge#edge.dst == Source_Id ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, {update, _New_Component, _Phase}}}, _} = Msg ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, broadcast}}, _} = Msg ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, {convergecast, _Source_Representative, _Source_Sum, _Minimax_Routing_Table, _PidToNameFrom}}}, _} = Msg -> 
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, {route, Dst, _Dist}}}, _} = Msg when Dst == Node#node.id ->
+            handle_mst_message(Msg, Node, State, Component);
+        {{_NameFrom, _PidFrom, _AckTo, _Ref, {_SessionID, {route, _Dst, _}}}, _} = Msg ->
             handle_mst_message(Msg, Node, State, Component)
     end.
 
@@ -225,6 +264,7 @@ handle_mst_message(Message, Node, State, Component) ->
     case lists:keyfind(From, 2, Node#node.adjs) of
         false ->
             ?LOG_DEBUG("Got a message from ~p who is not my neighbor", [From]),
+            io:format("discarding message ~p from ~p~n", [Message, From]),
             node_loop(Node, State, Component);
         _ ->
             case Message of
@@ -357,23 +397,24 @@ handle_mst_message(Message, Node, State, Component) ->
                     PidToName = Node#node.pid_to_name,
                     NewNode = Node#node{pid_to_name = PidToName#{PidFrom => NameFrom}},
                     broadcast(NewNode, State, Component);
-                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {convergecast, Source_Representative, Source_Sum, Minimax_Routing_Table, PidToNameFrom}}}, _} = Msg -> events:received_annotated_msg(Msg),
-                                                                                                                                                                     send_ack(self(), AckTo, Ref),
-                                                                                                                                                                     NewPidToName = maps:merge((Node#node.pid_to_name)#{PidFrom => NameFrom}, PidToNameFrom),
-                                                                                                                                                                     convergecast(
-                                                                                                                                                                       Node#node{
-                                                                                                                                                                         minimax_routing_table = maps:merge(
-                                                                                                                                                                                                   Node#node.minimax_routing_table, Minimax_Routing_Table
-                                                                                                                                                                                                  ),
-                                                                                                                                                                         pid_to_name = NewPidToName
-                                                                                                                                                                        },
-                                                                                                                                                                       State#state{
-                                                                                                                                                                         replies = State#state.replies + 1,
-                                                                                                                                                                         representative = max(State#state.representative, Source_Representative),
-                                                                                                                                                                         sum = State#state.sum + Source_Sum
-                                                                                                                                                                        },
-                                                                                                                                                                       Component
-                                                                                                                                                                      );
+                {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {convergecast, Source_Representative, Source_Sum, Minimax_Routing_Table, PidToNameFrom}}}, _} = Msg -> 
+                    events:received_annotated_msg(Msg),
+                    send_ack(self(), AckTo, Ref),
+                    NewPidToName = maps:merge((Node#node.pid_to_name)#{PidFrom => NameFrom}, PidToNameFrom),
+                    convergecast(
+                      Node#node{
+                        minimax_routing_table = maps:merge(
+                                                  Node#node.minimax_routing_table, Minimax_Routing_Table
+                                                 ),
+                        pid_to_name = NewPidToName
+                       },
+                      State#state{
+                        replies = State#state.replies + 1,
+                        representative = max(State#state.representative, Source_Representative),
+                        sum = State#state.sum + Source_Sum
+                       },
+                      Component
+                     );
                 {{NameFrom, PidFrom, AckTo, Ref, {_SessionID, {route, Dst, Dist}}}, _} = Msg when Dst == Node#node.id ->
                     events:received_annotated_msg(Msg),
                     send_ack(self(), AckTo, Ref),
@@ -389,14 +430,7 @@ handle_mst_message(Message, Node, State, Component) ->
                     Next_Hop_Edge = maps:get(Dst, Node#node.minimax_routing_table, Node#node.parent),
                     events:tick(),
                     send_wait_ack(State#state.name, Next_Hop_Edge#edge.dst, Msg),
-                    node_loop(NewNode, State, Component);
-                % {{_, _, AckTo, Ref, {_, _}}, _} = Msg ->
-                %     ?LOG_ERROR("~p", [Msg]),
-                %     send_ack(self(), AckTo, Ref),
-                %     node_loop(Node, State, Component)
-                _ ->
-                    self() ! Message, % keep the message for later consumption
-                    node_loop(Node, State, Component)
+                    node_loop(NewNode, State, Component)
             end
     end.
 
@@ -686,6 +720,7 @@ wait_acknowledgement(Destination, Msg, Ref, Parent, Timeout) ->
             ok
         after Timeout ->
             % ?LOG_DEBUG("Didn't get ack for ~p", [Msg]),
+            io:format("Message ~p to ~p timed out~n", [Msg, Destination]),
             Parent ! {timeout, Destination}
     end.
 
@@ -756,4 +791,5 @@ on_message(From, To, Msg, _FromState, _ToState, _FromTime, _ToTime, FromVClock, 
     % Event = #{tag => Tag, from => From, to => To, from_time => FromTime, to_time => ToTime},
     Event = #{tag => Tag, from => From, to => To, from_time => timestamp_to_json(FromVClock), to_time => timestamp_to_json(ToVClock)},
     save_event(Event).
+
 

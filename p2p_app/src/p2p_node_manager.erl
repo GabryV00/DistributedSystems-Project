@@ -1,8 +1,6 @@
 %%%-------------------------------------------------------------------
-%%% @author  <gianluca>
-%%% @copyright (C) 2024, 
-%%% @doc
-%%%
+%%% @author Gianluca Zavan
+%%% @doc Implements the supervisor for all the peers in the network.
 %%% @end
 %%% Created: 28 March 2024
 %%%-------------------------------------------------------------------

@@ -1,3 +1,9 @@
+%%%-------------------------------------------------------------------
+%%% @author Gianluca Zavan
+%%% @doc Implements the connection handler.
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(p2p_conn_handler).
 -export([start_link/0, talk_to/4, talk_to/5, send_data/2]).
 
@@ -12,6 +18,7 @@
 
 %% @doc Starts the connection handler
 %% @end
+-spec start_link() -> {ok, pid()}.
 start_link() ->
     Pid = spawn_link(fun() -> init() end),
     {ok, Pid}.

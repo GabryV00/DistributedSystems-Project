@@ -1,10 +1,7 @@
 %%%-------------------------------------------------------------------
-%%% @author  <gianluca>
-%%% @copyright (C) 2024, 
-%%% @doc
-%%%
+%%% @author Gianluca Zavan
+%%% @doc Implements the supervisor for the admin process and the TCP endpoint.
 %%% @end
-%%% Created: 25 March 2024
 %%%-------------------------------------------------------------------
 -module(p2p_admin_sup).
 

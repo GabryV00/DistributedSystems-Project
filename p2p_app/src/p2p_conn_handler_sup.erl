@@ -1,10 +1,7 @@
 %%%-------------------------------------------------------------------
-%%% @author  <gianluca>
-%%% @copyright (C) 2024, 
-%%% @doc
-%%%
+%%% @author Gianluca Zavan
+%%% @doc Implements the connection handlers supervisor for a peer.
 %%% @end
-%%% Created: 03 April 2024
 %%%-------------------------------------------------------------------
 -module(p2p_conn_handler_sup).
 

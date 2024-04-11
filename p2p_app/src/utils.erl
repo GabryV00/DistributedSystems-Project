@@ -1,3 +1,9 @@
+%%%-------------------------------------------------------------------
+%%% @author Gianluca Zavan
+%%% @doc Various utility functions.
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(utils).
 -export([get_pid_from_id/1, build_edges/2, init_network/1]).
 

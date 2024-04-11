@@ -1,3 +1,9 @@
+%%%-------------------------------------------------------------------
+%%% @author Gianluca Zavan
+%%% @doc Implements the TCP endpoint on which to listen for the admin commands.
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(p2p_tcp).
 -export([start_link/1]).
 
