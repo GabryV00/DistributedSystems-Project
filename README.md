@@ -21,4 +21,4 @@ Then, you can install the needed dependencies executing the following command:
 pip install -r src/webgui/requirements.txt 
 ```
 
-At this point the wrapper scripts \texttt{`launch_p2p.sh`} and \texttt{`launch_server.sh`} can be executed from two different terminals to start respectively the Erlang backend and the Python web application.
+At this point the wrapper scripts `launch_p2p.sh` and `launch_server.sh` can be executed from two different terminals to start respectively the Erlang backend and the Python web application.
