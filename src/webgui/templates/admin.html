@@ -4,12 +4,17 @@
     <title>ADMIN CONTROL PANEL</title> 
     <style>
         /* CSS for fixed-size window */
-        #file-content {
+        .file-content {
             width: 90%; /* Adjust width as needed */
             height: 500px; /* Adjust height as needed */
             overflow: auto; /* Add scrollbars if content exceeds dimensions */
             border: 1px solid #ccc; /* Optional: Add border */
             padding: 10px; /* Optional: Add padding */
+            display: none;
+        }
+
+        #p2pNode {
+            display: block;
         }
 
         .left {
@@ -23,7 +28,18 @@
             overflow: auto;
         }
 
+        #container {
+            position: relative;
+        }
+
+        .toggleButton {
+            position: relative;
+            margin-right: 10px;
+        }
+
+
     </style>
+    <script src="{{url_for('static', filename='togglelog.js')}}" defer></script>
 </head> 
 <body> 
     <div class="left">
@@ -31,10 +47,10 @@
     <hr>
     {%  if status %}
     <h1> REQUEST STATUS: {{status}}</h1>
-{%  endif %}
-{%  if message %}
+    {%  endif %}
+    {%  if message %}
     <h1> {{message}}</h1>
-{%  endif %}
+    {%  endif %}
     <hr>
     <form action="/add_node" method="post">
         Enter the ID of the new peer: <input name="id"> <br><br>
@@ -51,18 +67,31 @@
     </form>
     <hr>
     <h1>Real-time Log File Viewer</h1>
-    <div id="file-content">
-        {% for line in content %}
-        <p> <b>{{line['module']}}</b>
 
-        {% if line['process_name'] %}
-            ({{line['process_name']}})
-        {% endif %}
-
-        {{line['msg']}}
-        </p>
-        {% endfor %}
+    <div id="container">
+        <button class="toggleButton" data-target="p2pNode">Peer logic</button>
+        <button class="toggleButton" data-target="ghs">MST</button>
+        <button class="toggleButton" data-target="tcp">TCP endpoint</button>
+        <button class="toggleButton" data-target="other">Other</button>
     </div>
+
+
+    <div class="file-content" id="p2pNode">
+        <!-- {% for line in content %} -->
+        <!-- <p> <b>{{line['module']}}</b> -->
+
+        <!-- {% if line['process_name'] %} -->
+        <!--     ({{line['process_name']}}) -->
+        <!-- {% endif %} -->
+
+        <!-- {{line['msg']}} -->
+        <!-- </p> -->
+        <!-- {% endfor %} -->
+    </div>
+    <div class="file-content" id="ghs"></div>
+    <div class="file-content" id="tcp"></div>
+    <div class="file-content" id="other"></div>
+
 
     <p><a href="/log/" target="_blank">Download File</a></p>
 
@@ -71,8 +100,14 @@
         setInterval(() => {
             fetch('/log/').then(response => response.text()).then(data => {
                 let json = data.split('\n');
-                json.pop()
-                let output = json.map((line) => {
+                json.pop();
+
+                var ghs = [];
+                var p2pNode = [];
+                var tcp = [];
+                var other = [];
+
+                json.forEach((line) => {
                     let parsed = JSON.parse(line);
 
                     if (parsed.process_name) {
@@ -81,13 +116,31 @@
                         var process_name = "";
                     }
 
-                    return "<p><b>" + parsed.module.toString() + "</b> " + process_name + parsed.msg.toString() + "</p>";
-                })
+                    let formatted = "<p><b>" + parsed.module.toString() + "</b> " + process_name + parsed.msg.toString() + "</p>";
 
-                output = output.join('\n');
-                document.getElementById('file-content').innerHTML = output;
+                    switch (parsed.module.split(':')[0]) {
+                        case "ghs":
+                            ghs.push(formatted);
+                            break;
+                        case "p2p_node":
+                            p2pNode.push(formatted);
+                            break;
+                        case "p2p_tcp":
+                            tcp.push(formatted);
+                            break;
+                        default:
+                            other.push(formatted);
+                            break;
+                    }
+                });
+
+                document.getElementById('ghs').innerHTML = ghs.join('\n');
+                document.getElementById('p2pNode').innerHTML = p2pNode.join('\n');
+                document.getElementById('tcp').innerHTML = tcp.join('\n');
+                document.getElementById('other').innerHTML = other.join('\n');
+
             });
-        }, 1000); // Update every second (adjust as needed)
+}, 1000); // Update every second (adjust as needed)
     </script>
     <hr>
 
