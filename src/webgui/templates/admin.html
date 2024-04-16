@@ -51,7 +51,18 @@
     </form>
     <hr>
     <h1>Real-time Log File Viewer</h1>
-    <div id="file-content">{{ content }}</div>
+    <div id="file-content">
+        {% for line in content %}
+        <p> <b>{{line['module']}}</b>
+
+        {% if line['process_name'] %}
+            ({{line['process_name']}})
+        {% endif %}
+
+        {{line['msg']}}
+        </p>
+        {% endfor %}
+    </div>
 
     <p><a href="/log/" target="_blank">Download File</a></p>
 
@@ -59,7 +70,22 @@
         // JavaScript to fetch file content and update the page
         setInterval(() => {
             fetch('/log/').then(response => response.text()).then(data => {
-                document.getElementById('file-content').innerText = data;
+                let json = data.split('\n');
+                json.pop()
+                let output = json.map((line) => {
+                    let parsed = JSON.parse(line);
+
+                    if (parsed.process_name) {
+                        var process_name = "(" + parsed.process_name.toString() + ") ";
+                    } else {
+                        var process_name = "";
+                    }
+
+                    return "<p><b>" + parsed.module.toString() + "</b> " + process_name + parsed.msg.toString() + "</p>";
+                })
+
+                output = output.join('\n');
+                document.getElementById('file-content').innerHTML = output;
             });
         }, 1000); // Update every second (adjust as needed)
     </script>

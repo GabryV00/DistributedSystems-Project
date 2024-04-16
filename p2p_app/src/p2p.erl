@@ -60,22 +60,38 @@ main(Args) ->
             {false, false} -> error
         end,
         modes => [write],
-        formatter => {logger_formatter, #{template => [pid, " ", msg, "\n"]}}
+        % save logs in json format
+        formatter => {logger_formatter,
+                      #{template => [
+                                     "\{",
+                                     {process_name, ["\"process_name\":", "\"", process_name, "\","], []},
+                                     "\"when\":", "\"", time, "\",",
+                                     "\"module\":", "\"", mfa, "\",",
+                                     "\"pid\":", "\"", pid, "\","
+                                     "\"msg\":", "\"", msg, "\"",
+                                     "\}\n"]}}
     },
     logger:add_handler(to_file_handler, logger_std_h, Config),
     logger:set_handler_config(default, level, notice),
 
 
-    if
-        Verbose ->
+    case {VeryVerbose, Verbose} of
+        {true, _} ->
             % Set main modules to debug mode
             logger:set_module_level(?MODULE, debug),
             logger:set_module_level(p2p_node, debug),
             logger:set_module_level(ghs, debug);
-        true -> ok
+        {false, true} ->
+            logger:set_module_level(?MODULE, info),
+            logger:set_module_level(p2p_node, info),
+            logger:set_module_level(ghs, info);
+        {false, false} ->
+            logger:set_module_level(?MODULE, error),
+            logger:set_module_level(p2p_node, error),
+            logger:set_module_level(ghs, error)
     end,
 
-    ?LOG_DEBUG("initdir ~p", [InitDir]),
+    ?LOG_DEBUG("initdir ~s", [InitDir]),
 
     start(InitDir),
 
@@ -97,7 +113,7 @@ start() ->
 %% @doc Same as start/0, but initializes the network from the config files in InitDir
 %% @end
 start(InitDir) ->
-    ?LOG_DEBUG("Initializing network from ~p", [InitDir]),
+    ?LOG_DEBUG("Initializing network from ~s", [InitDir]),
     p2p_admin_sup:start_link(),
     p2p_node_manager:start_link(),
     utils:init_network(InitDir),

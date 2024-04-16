@@ -54,7 +54,7 @@ init_node_from_file(FileName) ->
         Id = utils:get_pid_from_id(maps:get(<<"id">>, Data)),
         Edges = utils:build_edges(Id, maps:get(<<"edges">>, Data)),
         p2p_node_manager:spawn_node(Id, []),
-        ?LOG_DEBUG("Node ~p started from file ~p", [Id, FileName]),
+        ?LOG_DEBUG("Node ~p started from file ~s", [Id, FileName]),
         {Id, Edges}
     catch
         error:{Reason, _Stack} ->
@@ -340,6 +340,7 @@ handle_call(get_state = Req, _, State) ->
 %% Join the network by notifying the nodes in Adjs
 handle_call({join, Adjs} = Req, _From, #state{name = Name, supervisor = Supervisor, mst_computer_pid = MstComputerPid} = State) ->
     ?LOG_DEBUG("(~p) got (call) ~p", [State#state.name, Req]),
+    ?LOG_INFO("joining the network", #{process_name => Name}),
     % Get a process to compute the MST from the supervisor
     MstComputer = get_mst_worker(Name, MstComputerPid, Supervisor),
     % Ask the neighbors for the pid of their MST process
@@ -575,6 +576,7 @@ handle_cast(Request, State) ->
 %% The MST computer finished its task in the algorithm and reports its MST edges
 handle_info({done, {SessionID, MstParent, MstRoutingTable}} = Msg, State) when SessionID >= State#state.current_mst_session ->
     ?LOG_DEBUG("(~p) got ~p from my MST computer", [State#state.name, Msg]),
+    ?LOG_INFO("MST computation (session ~p) terminated", [SessionID], #{process_name => State#state.name}),
     % Update the peer's state because now the MST has been computed
     NewState = State#state{current_mst_session = SessionID,
                            mst_state = computed,
@@ -592,7 +594,8 @@ handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#
 
     % Delete the appropriate edge towards the unreachable peer
     case lists:keyfind(MstEdgeToDelete, 1, lists:zip(MstAdjs, Adjs)) of
-        {_, EdgeToDelete} ->
+        {_, #edge{dst = Dst} = EdgeToDelete} ->
+            ?LOG_INFO("~p became unreachable while computing MST", [Dst], #{process_name => State#state.name}),
             NewAdjs = lists:delete(EdgeToDelete, Adjs),
             NewMstAdjs = lists:delete(MstEdgeToDelete, MstAdjs);
             % io:format("unreachable ~p~n", [EdgeToDelete]);
@@ -600,6 +603,7 @@ handle_info({unreachable, SessionID, Who} = Msg, State) when SessionID >= State#
             NewAdjs = Adjs,
             NewMstAdjs = MstAdjs
     end,
+
 
     % Get a fresh session ID to start a new MST computation
     NewSessionID = get_new_session_id(),
@@ -653,6 +657,7 @@ terminate(_Reason, State) ->
     Id = extract_id(State#state.name),
     % Delete the peer's config file
     file:delete(?CONFIG_DIR ++ "node_" ++ Id ++ ".json"),
+    ?LOG_INFO("terminating", #{process_name => State#state.name}),
     try
         exit(State#state.mst_computer_pid, kill),
         maps:foreach(fun(_ConnId, ConnHandler) -> exit(ConnHandler, kill) end, State#state.conn_handlers)
@@ -699,7 +704,8 @@ format_status(_Opt, Status) ->
 %% @param MstComputerPid Is the pid of the process managing the MST of the node Name
 %% @param SessionID Is the session of the MST
 %% @end
-start_mst_computation(_Name, _Adjs, MstAdjs, MstComputerPid, SessionID) ->
+start_mst_computation(Name, Adjs, MstAdjs, MstComputerPid, SessionID) ->
+    ?LOG_INFO("starting MST computation with SessionID=~p and adjs=~p", [SessionID, Adjs], #{process_name => Name}),
     MstComputerPid ! {SessionID, {change_adjs, MstAdjs}}.
 
 
@@ -822,6 +828,7 @@ validate_edges(Name, Edges) ->
 %%  time frame and `{noproc, Dst}' if `Dst' is dead
 %% @end
 get_neighbors_mst_pid(Adjs, Name, MstComputer) ->
+    ?LOG_INFO("Announicing presence to neighbors", #{process_name => Name}),
     lists:map(fun(#edge{dst = Dst, weight = Weight}) ->
                       try
                           DstPid = gen_server:call(Dst, {new_neighbor, Name, Weight, MstComputer}),

@@ -16,6 +16,13 @@ LOG_FILE_NAME = '../../p2p_app/logs/log.txt'
 
 OPEN_CONN = []
 
+def extract_logs(filename):
+    with open(filename, "r") as f:
+        data = f.read().split('\n')
+        # last element of data should be discarded because it's an empty line
+        return [json.loads(d) for d in data[:-1]]
+
+
 def interpret_response(data):
     """
     Function that takes bytes in inputs and return the interpretation of the json
@@ -127,8 +134,7 @@ def generate_graph(PATH):
 @app.route("/", methods=['GET', 'POST'])
 def admin():
     generate_graph("./../init/config_files")
-    with open(LOG_FILE_NAME, 'r') as file:
-        content = file.read()
+    content = extract_logs(LOG_FILE_NAME)
     return render_template('admin.html', content=content)
 
 @app.route('/add_node', methods=['POST'])
@@ -142,8 +148,7 @@ def add_node():
     
     ris, msg = send_new(node_id, edges)
     generate_graph("./../init/config_files")
-    with open(LOG_FILE_NAME, 'r') as file:
-        content = file.read()
+    content = extract_logs(LOG_FILE_NAME)
     return render_template('admin.html', content=content, status=ris, message=msg)
 
 @app.route('/remove_node', methods=['POST'])
@@ -162,8 +167,7 @@ def remove_node():
             break
 
     generate_graph("./../init/config_files")
-    with open(LOG_FILE_NAME, 'r') as file:
-        content = file.read()
+    content = extract_logs(LOG_FILE_NAME)
     return render_template('admin.html', content=content, status=ris, message=msg)
 
 
@@ -212,3 +216,5 @@ def get_file():
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080)
+
+

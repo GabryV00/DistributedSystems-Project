@@ -14,7 +14,10 @@ fi
 cd ..
 cd ..
 cd p2p_app
+
+[ -f "logs/log.txt" ] && rm logs/log.txt
+
 rebar3 escriptize
-_build/default/bin/p2p -i "../src/init/config_files/"
+_build/default/bin/p2p -v -i "../src/init/config_files/"
 
 echo "Erlang app launched!"
