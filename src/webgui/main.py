@@ -187,7 +187,7 @@ def peer():
 
     if 'ok' in ris:
         OPEN_CONN.append([id_peerA, id_peerB, band])
-    return render_template('peer.html', status=ris, message=msg, oc=(OPEN_CONN))
+    return render_template('peer.html', status=ris, message=msg, oc=OPEN_CONN)
 
 @app.route("/close_conn", methods=['GET', 'POST'])
 def close_conn():
@@ -202,7 +202,7 @@ def close_conn():
         if (id_peerA == e[0] and id_peerB == e[1]) or (id_peerA == e[1] and id_peerB == e[0]):
             OPEN_CONN.remove(e)
             break
-    return render_template('peer.html', status=ris, message=msg,  oc=(OPEN_CONN))
+    return render_template('peer.html', status=ris, message=msg,  oc=OPEN_CONN)
 
 #----------------------LOG---------------------------------
 @app.route("/log/")

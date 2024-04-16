@@ -11,9 +11,22 @@
             border: 1px solid #ccc; /* Optional: Add border */
             padding: 10px; /* Optional: Add padding */
         }
+
+        .left {
+            width: 50%;
+            float: left;
+        }
+
+        .right {
+            width: 50%;
+            float: right;
+            overflow: auto;
+        }
+
     </style>
 </head> 
 <body> 
+    <div class="left">
     <h1>ADMIN CONTROL PANEL</h1>
     <hr>
     {%  if status %}
@@ -51,7 +64,11 @@
         }, 1000); // Update every second (adjust as needed)
     </script>
     <hr>
-    <h1>NETWORK GRAPH</h1>
-    <img src="/static/graph.gv.png">
+
+    </div>
+    <div class="right">
+        <h1>NETWORK GRAPH</h1>
+        <img src="/static/graph.gv.png">
+    </div>
 </body> 
 </html>
