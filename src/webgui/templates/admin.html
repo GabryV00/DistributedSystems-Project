@@ -13,7 +13,7 @@
             display: none;
         }
 
-        #p2pNode {
+        #all {
             display: block;
         }
 
@@ -69,6 +69,7 @@
     <h1>Real-time Log File Viewer</h1>
 
     <div id="container">
+        <button class="toggleButton" data-target="all">All logs</button>
         <button class="toggleButton" data-target="p2pNode">Peer logic</button>
         <button class="toggleButton" data-target="ghs">MST</button>
         <button class="toggleButton" data-target="tcp">TCP endpoint</button>
@@ -76,6 +77,7 @@
     </div>
 
 
+    <div class="file-content" id="all"></div>
     <div class="file-content" id="p2pNode">
         <!-- {% for line in content %} -->
         <!-- <p> <b>{{line['module']}}</b> -->
@@ -106,6 +108,7 @@
                 var p2pNode = [];
                 var tcp = [];
                 var other = [];
+                var all = [];
 
                 json.forEach((line) => {
                     let parsed = JSON.parse(line);
@@ -132,8 +135,10 @@
                             other.push(formatted);
                             break;
                     }
+                    all.push(formatted);
                 });
 
+                document.getElementById('all').innerHTML = all.join('\n');
                 document.getElementById('ghs').innerHTML = ghs.join('\n');
                 document.getElementById('p2pNode').innerHTML = p2pNode.join('\n');
                 document.getElementById('tcp').innerHTML = tcp.join('\n');
