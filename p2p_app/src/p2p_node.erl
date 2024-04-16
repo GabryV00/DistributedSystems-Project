@@ -829,13 +829,15 @@ validate_edges(Name, Edges) ->
 %% @end
 get_neighbors_mst_pid(Adjs, Name, MstComputer) ->
     ?LOG_INFO("Announicing presence to neighbors", #{process_name => Name}),
-    lists:map(fun(#edge{dst = Dst, weight = Weight}) ->
+    lists:map(fun(#edge{dst = Dst, weight = Weight} = Edge) ->
                       try
                           DstPid = gen_server:call(Dst, {new_neighbor, Name, Weight, MstComputer}),
                           {ok, #edge{src = MstComputer, dst = DstPid, weight = Weight}}
                       catch
-                          exit:{timeout, _} -> {timed_out, Dst};
-                          exit:{noproc, _} -> {noproc, Dst}
+                          exit:{timeout, _} -> {timed_out, Edge};
+                          error:{timeout, _} -> {timed_out, Edge};
+                          exit:{noproc, _} -> {noproc, Edge};
+                          error:{noproc, _} -> {noproc, Edge}
                       end
               end, Adjs).
 
