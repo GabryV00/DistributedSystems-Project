@@ -14,13 +14,20 @@
 %% @param Args Various arguments.
 %% @end
 main(Args) ->
-    {ok, #{verbose := Verbose, init := InitDir}, _, _} =
+    {ok, #{verbose := Verbose, very_verbose := VeryVerbose, init := InitDir}, _, _} =
         argparse:parse(Args, #{
             arguments => [
                 #{
                     name => verbose,
                     short => $v,
                     long => "verbose",
+                    type => boolean,
+                    default => false
+                },
+                #{
+                    name => very_verbose,
+                    short => $V,
+                    long => "vv",
                     type => boolean,
                     default => false
                 },
@@ -47,10 +54,11 @@ main(Args) ->
             burst_limit_enable => false
         },
         level =>
-            if
-                Verbose -> debug;
-                true -> notice
-            end,
+        case {VeryVerbose, Verbose} of
+            {true, _} -> debug;
+            {false, true} -> info;
+            {false, false} -> error
+        end,
         modes => [write],
         formatter => {logger_formatter, #{template => [pid, " ", msg, "\n"]}}
     },
